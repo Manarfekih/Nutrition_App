@@ -1,0 +1,23 @@
+﻿@inherits LayoutComponentBase
+
+<div class="d-flex flex-column min-vh-100">
+    <!-- Navbar -->
+    <NavMenu />
+
+    <!-- Page Content -->
+    <main class="flex-fill container-fluid mt-4">
+        @Body
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+<style>
+    body {
+        background-color: #f5f5f5;
+    }
+</style>

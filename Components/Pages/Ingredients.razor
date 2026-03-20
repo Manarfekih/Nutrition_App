@@ -1,0 +1,143 @@
+@page "/ingredients"
+@using Recipe_Nutrition_App.Models
+@using Recipe_Nutrition_App.Services
+@inject NavigationManager NavManager
+@inject IngredientService IngredientService
+@rendermode InteractiveServer
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">
+            <i class="bi bi-egg-fried me-2"></i>Ingredients
+        </h2>
+    </div>
+
+    <!-- Add/Edit Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">@submitButtonText</h5>
+            <EditForm Model="@currentIngredient" OnValidSubmit="@SaveIngredient">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">Name</label>
+                        <InputText class="form-control" @bind-Value="currentIngredient.Name" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Calories</label>
+                        <InputNumber class="form-control" @bind-Value="currentIngredient.Calories" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Unit</label>
+                        <InputText class="form-control" @bind-Value="currentIngredient.Unit" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Image URL</label>
+                        <InputText class="form-control" @bind-Value="currentIngredient.ImagePath" />
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-outline-secondary ms-2" @onclick="ResetForm">Clear</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+
+    <!-- Ingredients Table -->
+    @if (ingredients.Any())
+    {
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Calories</th>
+                            <th>Unit</th>
+                            <th>Image</th>
+                            <th style="width: 100px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ingredient in ingredients)
+                        {
+                            <tr>
+                                <td class="fw-medium">@ingredient.Name</td>
+                                <td>@ingredient.Calories kcal</td>
+                                <td>@ingredient.Unit</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(ingredient.ImagePath))
+                                    {
+                                        <img src="@ingredient.ImagePath" alt="@ingredient.Name" 
+                                             style="width: 40px; height: 40px; object-fit: cover;" 
+                                             class="rounded" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning me-1" 
+                                            @onclick="() => EditIngredient(ingredient)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            @onclick="() => DeleteIngredient(ingredient.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">No ingredients yet. Add your first ingredient above!</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Ingredient> ingredients = new();
+    private Ingredient currentIngredient = new();
+    private string submitButtonText = "Add Ingredient";
+
+    protected override async Task OnInitializedAsync() => await LoadIngredients();
+
+    private async Task LoadIngredients() => ingredients = await IngredientService.GetIngredientsAsync();
+
+    private async Task SaveIngredient()
+    {
+        if (currentIngredient.Id == 0)
+            await IngredientService.addIngredientAsync(currentIngredient);
+        else
+            await IngredientService.UpdateIngredientAsync(currentIngredient);
+
+        await LoadIngredients();
+        ResetForm();
+    }
+
+    private void EditIngredient(Ingredient ingredient)
+    {
+        currentIngredient = ingredient;
+        submitButtonText = "Edit Ingredient";
+    }
+
+    private async Task DeleteIngredient(int id)
+    {
+        await IngredientService.DeleteIngredientAsync(id);
+        await LoadIngredients();
+    }
+
+    private void ResetForm()
+    {
+        currentIngredient = new Ingredient();
+        submitButtonText = "Add Ingredient";
+    }
+}
