@@ -1,4 +1,6 @@
-﻿<nav class="navbar navbar-expand-lg navbar-custom shadow-sm px-3 px-lg-4">
+﻿@rendermode InteractiveServer
+
+<nav class="navbar navbar-expand-lg navbar-custom shadow-sm px-3 px-lg-4">
     <div class="container-fluid p-0">
         
         <!-- Logo / Brand -->
@@ -30,35 +32,52 @@
                         <span>Home</span>
                     </NavLink>
                 </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/ingredients">
-                        <i class="bi bi-basket nav-icon"></i>
-                        <span>Ingredients</span>
-                    </NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/recipes">
-                        <i class="bi bi-book nav-icon"></i>
-                        <span>Recipes</span>
-                    </NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/dashboard">
-                        <i class="bi bi-bar-chart-steps nav-icon"></i>
-                        <span>Dashboard</span>
-                    </NavLink>
-                </li>
+                <AuthorizeView>
+                    <Authorized>
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/ingredients">
+                                <i class="bi bi-basket nav-icon"></i>
+                                <span>Ingredients</span>
+                            </NavLink>
+                        </li>
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/recipes">
+                                <i class="bi bi-book nav-icon"></i>
+                                <span>Recipes</span>
+                            </NavLink>
+                        </li>
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/dashboard">
+                                <i class="bi bi-bar-chart-steps nav-icon"></i>
+                                <span>Dashboard</span>
+                            </NavLink>
+                        </li>
+                    </Authorized>
+                </AuthorizeView>
             </ul>
 
             <!-- Right Section -->
-            <div class="chef-section d-flex align-items-center gap-3 my-3 my-lg-0">
-                <div class="chef-card">
-                    <div class="chef-avatar-wrapper">
-                        <i class="bi bi-person-check-fill"></i>
-                    </div>
-                    <div class="chef-details d-none d-md-block">
-                        <div class="chef-title">Chef's Corner</div>
-                        <div class="chef-subtitle">Healthy Recipes</div>
+            <div class="d-flex align-items-center gap-2 my-3 my-lg-0 ms-lg-auto">
+                <AuthorizeView>
+                    <Authorized>
+                        <span class="text-muted small d-none d-md-inline">@context.User.Identity?.Name</span>
+                        <a class="btn btn-outline-secondary btn-sm" href="/Account/Logout">Sign out</a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="btn btn-outline-primary btn-sm" href="/Account/Login">Sign in</a>
+                        <a class="btn btn-primary btn-sm" href="/Account/Register">Register</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+
+                <div class="chef-section d-flex align-items-center gap-3 border-start ps-3 ms-1">
+                    <div class="chef-card">
+                        <div class="chef-avatar-wrapper">
+                            <i class="bi bi-person-check-fill"></i>
+                        </div>
+                        <div class="chef-details d-none d-md-block">
+                            <div class="chef-title">Chef's Corner</div>
+                            <div class="chef-subtitle">Healthy Recipes</div>
+                        </div>
                     </div>
                 </div>
             </div>

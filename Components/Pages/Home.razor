@@ -1,14 +1,160 @@
 ﻿@page "/"
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
 
-<div class="container py-5">
-    <div class="text-center">
-        <div class="mb-4">
-            <i class="bi bi-journal-bookmark-fill display-1 text-primary"></i>
+<div class="home-root px-0">
+    <!-- Hero: dark band + kitchen imagery (place hero-kitchen.png in wwwroot/images/home/) -->
+    <section class="home-hero" aria-labelledby="home-hero-title">
+        <div class="home-hero-inner">
+            <p class="home-hero-kicker">Recipe Nutrition</p>
+            <h1 id="home-hero-title" class="home-hero-title">
+                The joy of cooking : inspiration in every recipe
+            </h1>
+            <p class="home-hero-lead">
+                Discover balanced plates from our kitchen: clear calories per ingredient, recipes by meal type,
+                and cuisines from Tunisia to the Mediterranean , so you cook with confidence.
+            </p>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <AuthorizeView>
+                    <Authorized>
+                        <a href="/recipes" class="home-btn-light">
+                            Browse recipes <i class="bi bi-arrow-right-short fs-5"></i>
+                        </a>
+                        <a href="/ingredients" class="home-btn-ghost">Ingredients</a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/Account/Register" class="home-btn-light">Create free account</a>
+                        <a href="/Account/Login" class="home-btn-ghost">Sign in</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+                <a href="#about-chef" class="home-btn-ghost d-none d-sm-inline-flex">Meet the chef</a>
+            </div>
         </div>
-        <h1 class="display-4 fw-bold mb-3">Welcome to Recipe Nutrition</h1>
-        
-        <a href="/ingredients" class="btn btn-primary btn-lg px-4">
-            Get Started <i class="bi bi-arrow-right ms-2"></i>
-        </a>
-    </div>
+    </section>
+
+    <!-- Chef intro -->
+    <section id="about-chef" class="home-chef-band">
+        <div class="home-chef-grid">
+            <div class="order-2 order-md-1">
+                <p class="home-chef-eyebrow">About the chef</p>
+                <h2 class="home-chef-title">Crafted plates, honest nutrition</h2>
+                <p class="home-chef-text">
+                    Our head chef brings years of professional kitchen experience and a passion for food that
+                    nourishes as well as delights. Every recipe in this app is organized so you can see
+                    <strong>total calories</strong>, <strong>per serving</strong>, and how each ingredient contributes.
+                </p>
+                <p class="home-chef-text mb-3">
+                    You will find inspiration across:
+                </p>
+                <ul class="home-chef-list">
+                    <li><strong>Meal moments</strong> : Breakfast, Lunch, Dinner, and Dessert</li>
+                    <li><strong>World flavours</strong> : Tunisian, French, Italian, Mediterranean, and more</li>
+                    <li><strong>Healthy balance</strong> : mindful portions without losing taste</li>
+                </ul>
+            </div>
+            <div class="order-1 order-md-2">
+                <figure class="home-chef-photo-wrap mb-0">
+                    <img class="home-chef-photo"
+                         src="images/chef.png"
+                         alt="Portrait of our head chef in a professional kitchen"
+                         width="480"
+                         height="600"
+                         loading="lazy" />
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature grid: light section -->
+    <section class="home-light-section" aria-labelledby="home-philosophy-title">
+        <div class="home-section-head">
+            <h2 id="home-philosophy-title" class="home-section-title">Our culinary philosophy</h2>
+            <p class="home-section-sub">
+                Whether you are planning a family dinner or exploring a new cuisine, we connect fresh ideas with
+                clear numbers — so taste and nutrition work together.
+            </p>
+        </div>
+        <div class="home-features">
+            <article class="home-feature-card">
+                <div class="home-feature-icon" aria-hidden="true">
+                    <i class="bi bi-basket3"></i>
+                </div>
+                <h3 class="home-feature-title">Fresh ingredients</h3>
+                <p class="home-feature-text">
+                    Build recipes from a living ingredient list with calories per unit — the foundation of every dish.
+                </p>
+            </article>
+            <article class="home-feature-card">
+                <div class="home-feature-icon" aria-hidden="true">
+                    <i class="bi bi-calendar2-week"></i>
+                </div>
+                <h3 class="home-feature-title">Recipes by category</h3>
+                <p class="home-feature-text">
+                    Browse by Breakfast, Lunch, Dinner, or Dessert to match your day and your table.
+                </p>
+            </article>
+            <article class="home-feature-card">
+                <div class="home-feature-icon" aria-hidden="true">
+                    <i class="bi bi-globe2"></i>
+                </div>
+                <h3 class="home-feature-title">Global cuisine</h3>
+                <p class="home-feature-text">
+                    Travel the table from Tunisian classics to French finesse, Italian comfort, and Mediterranean brightness.
+                </p>
+            </article>
+            <article class="home-feature-card">
+                <div class="home-feature-icon" aria-hidden="true">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <h3 class="home-feature-title">Clear nutrition</h3>
+                <p class="home-feature-text">
+                    Totals per recipe and per serving, plus a dashboard view — for members who sign in.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <!-- Kinds of recipes -->
+    <section class="container px-3 px-md-4 pb-2" aria-labelledby="home-kinds-title">
+        <div class="home-recipes-strip">
+            <h3 id="home-kinds-title">Kinds of recipes you will explore</h3>
+            <p class="mb-0">
+                Signed-in members unlock the full catalog: each recipe shows servings, category, cuisine, optional photo and video,
+                and a calorie breakdown built from real ingredients.
+            </p>
+            <p class="mt-3 mb-2 small text-white-50 text-uppercase" style="letter-spacing: 0.12em;">Categories</p>
+            <div class="home-tags mb-3">
+                <span class="home-tag">Breakfast</span>
+                <span class="home-tag">Lunch</span>
+                <span class="home-tag">Dinner</span>
+                <span class="home-tag">Dessert</span>
+            </div>
+            <p class="mb-2 small text-white-50 text-uppercase" style="letter-spacing: 0.12em;">Cuisines</p>
+            <div class="home-tags">
+                <span class="home-tag">Tunisian</span>
+                <span class="home-tag">French</span>
+                <span class="home-tag">Italian</span>
+                <span class="home-tag">Mediterranean</span>
+                <span class="home-tag">And more</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bottom  -->
+    <section class="home-cta-bar">
+        <AuthorizeView>
+            <Authorized>
+                <a href="/dashboard" class="btn btn-outline-primary btn-lg me-2 mb-2">Open dashboard</a>
+                <a href="/recipes" class="btn btn-primary btn-lg mb-2">Go to recipes</a>
+            </Authorized>
+            <NotAuthorized>
+                <a href="/Account/Register" class="btn btn-primary btn-lg me-2 mb-2">Get started</a>
+                <a href="/Account/Login" class="btn btn-outline-primary btn-lg mb-2">I already have an account</a>
+                <p class="home-note">
+                    Guests enjoy this introduction; create an account to browse ingredients, recipes, and analytics.
+                    Site administrators use their admin login to manage data.
+                </p>
+            </NotAuthorized>
+        </AuthorizeView>
+    </section>
 </div>

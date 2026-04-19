@@ -1,26 +1,28 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Recipe_Nutrition_App.Models;
 
 namespace Recipe_Nutrition_App.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
 
-        //tab ingredient
+        // tab ingredient
         public DbSet<Ingredient> Ingredients { get; set; }
 
-        //tab recipe
+        // tab recipe
         public DbSet<Recipe> Recipes { get; set; }
 
-        //tab ingredientss of recipe
+        // tab ingredients of recipe
         public DbSet<RecipeIngredients> RecipeIngredients { get; set; }
 
-        
-         protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // COMPOSITE PRIMARY KEY for (many to many tabl)
+            base.OnModelCreating(modelBuilder);
+
+            // COMPOSITE PRIMARY KEY (many-to-many table)
             modelBuilder.Entity<RecipeIngredients>()
                 .HasKey(ri => new { ri.RecipeId, ri.IngredientId });
 
@@ -30,14 +32,11 @@ namespace Recipe_Nutrition_App.Data
                 .WithMany(r => r.RecipeIngredients)
                 .HasForeignKey(ri => ri.RecipeId);
 
-            //many ingredients
+            // many ingredients
             modelBuilder.Entity<RecipeIngredients>()
                 .HasOne(ri => ri.Ingredient)
                 .WithMany(i => i.RecipeIngredients)
                 .HasForeignKey(ri => ri.IngredientId);
         }
-
-
-
     }
 }

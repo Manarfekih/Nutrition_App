@@ -1,0 +1,351 @@
+/* Scoped to Home.razor — dark hero + light sections, inspired by culinary landing layouts */
+
+.home-root {
+    /* Full-bleed inside layout container-fluid */
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: 50%;
+    transform: translateX(-50%);
+    padding-bottom: 2rem;
+
+    --home-charcoal: #1a1d21;
+    --home-charcoal-soft: #252a30;
+    --home-cream: #faf8f5;
+    --home-accent: #2c9c6d;
+    --home-accent-hover: #248a5e;
+    --home-gold: #c9a227;
+    --home-serif: "Georgia", "Times New Roman", serif;
+    --home-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+.home-hero {
+    position: relative;
+    min-height: clamp(22rem, 62vh, 38rem);
+    display: flex;
+    align-items: center;
+    color: #fff;
+    background-color: var(--home-charcoal);
+    background-image:
+        linear-gradient(105deg, rgba(26, 29, 33, 0.92) 0%, rgba(26, 29, 33, 0.75) 42%, rgba(26, 29, 33, 0.35) 100%),
+        url("/images/hero-kitchen.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 0 0 1.25rem 1.25rem;
+    overflow: hidden;
+}
+
+.home-hero-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+}
+
+.home-hero-kicker {
+    font-family: var(--home-sans);
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 0.75rem;
+}
+
+.home-hero-title {
+    font-family: var(--home-serif);
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1.12;
+    max-width: 20ch;
+    margin-bottom: 1rem;
+}
+
+.home-hero-lead {
+    font-family: var(--home-sans);
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    line-height: 1.65;
+    max-width: 36rem;
+    opacity: 0.92;
+    margin-bottom: 1.75rem;
+}
+
+.home-btn-light {
+    font-family: var(--home-sans);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.35rem;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--home-charcoal) !important;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-btn-light:hover {
+    color: var(--home-charcoal) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.home-btn-ghost {
+    font-family: var(--home-sans);
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1.25rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    color: #fff !important;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.15s ease;
+}
+
+.home-btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff !important;
+}
+
+.home-chef-band {
+    background: linear-gradient(180deg, var(--home-cream) 0%, #fff 100%);
+    margin-top: -0.5rem;
+    padding: 3rem 1.5rem 3.5rem;
+}
+
+.home-chef-grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+@media (min-width: 768px) {
+    .home-chef-grid {
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 3rem;
+    }
+}
+
+.home-chef-photo-wrap {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+    aspect-ratio: 4 / 5;
+    max-height: 420px;
+    background: linear-gradient(145deg, #e8e4de, #d4cfc7);
+}
+
+.home-chef-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}
+
+.home-chef-eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--home-accent);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.home-chef-title {
+    font-family: var(--home-serif);
+    font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+    color: var(--home-charcoal);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.home-chef-text {
+    font-family: var(--home-sans);
+    color: #5c6168;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+}
+
+.home-chef-list {
+    font-family: var(--home-sans);
+    color: #4a4f56;
+    padding-left: 1.1rem;
+    margin-bottom: 0;
+}
+
+.home-chef-list li {
+    margin-bottom: 0.35rem;
+}
+
+.home-light-section {
+    background: #fff;
+    padding: 3rem 1.5rem 4rem;
+}
+
+.home-section-head {
+    text-align: center;
+    max-width: 40rem;
+    margin: 0 auto 2.5rem;
+}
+
+.home-section-title {
+    font-family: var(--home-serif);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--home-charcoal);
+    margin-bottom: 0.5rem;
+}
+
+.home-section-sub {
+    font-family: var(--home-sans);
+    color: #6b7280;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.home-features {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 576px) {
+    .home-features {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 992px) {
+    .home-features {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.home-feature-card {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #eef0f2;
+    background: #fafbfc;
+    height: 100%;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-feature-card:hover {
+    border-color: rgba(44, 156, 109, 0.35);
+    box-shadow: 0 8px 28px rgba(44, 156, 109, 0.08);
+}
+
+.home-feature-icon {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(44, 156, 109, 0.12);
+    color: var(--home-accent);
+    font-size: 1.35rem;
+}
+
+.home-feature-title {
+    font-family: var(--home-sans);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--home-charcoal);
+    margin-bottom: 0.5rem;
+}
+
+.home-feature-text {
+    font-family: var(--home-sans);
+    font-size: 0.9rem;
+    color: #6b7280;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.home-recipes-strip {
+    background: var(--home-charcoal-soft);
+    color: #e8eaed;
+    padding: 2.5rem 1.5rem;
+    border-radius: 1rem;
+    max-width: 1100px;
+    margin: 0 auto 3rem;
+}
+
+.home-recipes-strip h3 {
+    font-family: var(--home-serif);
+    font-size: 1.35rem;
+    margin-bottom: 0.75rem;
+    color: #fff;
+}
+
+.home-recipes-strip p {
+    font-family: var(--home-sans);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    opacity: 0.9;
+    margin-bottom: 1rem;
+}
+
+.home-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.home-tag {
+    font-family: var(--home-sans);
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.home-cta-bar {
+    text-align: center;
+    padding: 2rem 1rem 3rem;
+    font-family: var(--home-sans);
+}
+
+.home-cta-bar .btn-primary {
+    background: var(--home-accent);
+    border-color: var(--home-accent);
+    border-radius: 999px;
+    padding: 0.65rem 1.5rem;
+    font-weight: 600;
+}
+
+.home-cta-bar .btn-primary:hover {
+    background: var(--home-accent-hover);
+    border-color: var(--home-accent-hover);
+}
+
+.home-cta-bar .btn-outline-primary {
+    border-radius: 999px;
+    padding: 0.65rem 1.5rem;
+    font-weight: 600;
+    color: var(--home-accent);
+    border-color: var(--home-accent);
+}
+
+.home-cta-bar .btn-outline-primary:hover {
+    background: var(--home-accent);
+    border-color: var(--home-accent);
+    color: #fff;
+}
+
+.home-note {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    margin-top: 1rem;
+    max-width: 32rem;
+    margin-left: auto;
+    margin-right: auto;
+}
