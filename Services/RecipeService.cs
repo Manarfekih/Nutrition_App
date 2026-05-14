@@ -165,6 +165,43 @@ namespace Recipe_Nutrition_App.Services
                 .OrderByDescending(x => x.RecipeCount)
                 .ToList();
         }
+
+        /// Returns top N recipes sorted by total calories descending.
+        public async Task<List<(string Name, double TotalCalories, double PerServing)>> GetTopCalorieRecipesAsync(int top = 5)
+        {
+            var recipes = await GetAllRecipesAsync();
+            return recipes
+                .Select(r => (r.Name, TotalCalories: CalculateTotalCalories(r), PerServing: CalculateCaloriesPerServing(r)))
+                .OrderByDescending(x => x.TotalCalories)
+                .Take(top)
+                .ToList();
+        }
+
+        /// Returns calorie-range buckets for all recipes.
+        public async Task<Dictionary<string, int>> GetCalorieRangeDistributionAsync()
+        {
+            var recipes = await GetAllRecipesAsync();
+            var buckets = new Dictionary<string, int>
+            {
+                { "< 200 kcal",   0 },
+                { "200–500 kcal", 0 },
+                { "500–800 kcal", 0 },
+                { "800–1200 kcal",0 },
+                { "> 1200 kcal",  0 }
+            };
+
+            foreach (var r in recipes)
+            {
+                var cal = CalculateTotalCalories(r);
+                if      (cal < 200)  buckets["< 200 kcal"]++;
+                else if (cal < 500)  buckets["200–500 kcal"]++;
+                else if (cal < 800)  buckets["500–800 kcal"]++;
+                else if (cal < 1200) buckets["800–1200 kcal"]++;
+                else                 buckets["> 1200 kcal"]++;
+            }
+
+            return buckets;
+        }
     }
 
     //  DTO returned by GetStatsByCuisineAsync 
