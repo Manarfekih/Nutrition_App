@@ -1,0 +1,567 @@
+@page "/recipes"
+
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Recipe_Nutrition_App.Models
+@using Recipe_Nutrition_App.Services
+
+@inject RecipeService RecipeService
+@inject IngredientService IngredientService
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+@rendermode InteractiveServer
+
+<PageTitle>Recipes</PageTitle>
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">🍽️ Recipes</h2>
+            <p class="text-muted">Manage your recipe collection</p>
+        </div>
+
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <button class="btn btn-primary"
+                        @onclick="async () => await OpenAddModal()">
+                    + Add Recipe
+                </button>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+
+    <!-- SEARCH + FILTERS -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <input class="form-control"
+                   type="text"
+                   placeholder="Search recipe..."
+                   value="@searchTerm"
+                   @oninput="OnSearchInput" />
+        </div>
+
+        <div class="col-md-4">
+            <select class="form-select" @onchange="OnCategoryChange">
+                <option value="">All Categories</option>
+
+                @foreach (var cat in Categories)
+                {
+                    <option value="@cat">@cat</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <select class="form-select" @onchange="OnCuisineChange">
+                <option value="">All Cuisines</option>
+
+                @foreach (var c in Cuisines)
+                {
+                    <option value="@c">@c</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <!-- RECIPES -->
+    @if (filteredRecipes.Any())
+    {
+        <div class="row g-4">
+
+            @foreach (var recipe in filteredRecipes)
+            {
+                var totalCalories = RecipeService.CalculateTotalCalories(recipe);
+                var caloriesPerServing = RecipeService.CalculateCaloriesPerServing(recipe);
+
+                <div class="col-md-6 col-lg-4">
+
+                    <div class="card h-100 shadow-sm">
+
+                        @if (!string.IsNullOrEmpty(recipe.ImagePath))
+                        {
+                            <img src="@recipe.ImagePath"
+                                 class="card-img-top"
+                                 style="height:220px; object-fit:cover;" />
+                        }
+
+                        <div class="card-body">
+
+                            <div class="mb-2">
+                                <span class="badge bg-primary me-1">@recipe.Category</span>
+                                <span class="badge bg-secondary">@recipe.Cuisine</span>
+                            </div>
+
+                            <h5 class="card-title fw-bold">
+                                @recipe.Name
+                            </h5>
+
+                            <div class="small text-muted mb-3">
+                                <div>Total: @totalCalories.ToString("F0") kcal</div>
+                                <div>Per serving: @caloriesPerServing.ToString("F0") kcal</div>
+                                <div>Servings: @recipe.Servings</div>
+                            </div>
+
+                            <!-- ACTIONS -->
+                            <div class="d-flex gap-2">
+
+                                <button class="btn btn-outline-primary btn-sm"
+                                        @onclick="() => ViewRecipe(recipe.Id)">
+                                    View
+                                </button>
+
+                                <AuthorizeView Roles="Admin">
+                                    <Authorized>
+
+                                        <button class="btn btn-outline-warning btn-sm"
+                                                @onclick="async () => await OpenEditModal(recipe)">
+                                            Edit
+                                        </button>
+
+                                        <button class="btn btn-outline-danger btn-sm"
+                                                @onclick="() => ConfirmDelete(recipe)">
+                                            Delete
+                                        </button>
+
+                                    </Authorized>
+                                </AuthorizeView>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            }
+
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <h4>No recipes found.</h4>
+        </div>
+    }
+</div>
+
+<!-- MODAL -->
+@if (showModal)
+{
+    <div class="modal fade show d-block"
+         tabindex="-1"
+         style="background-color: rgba(0,0,0,0.5);">
+
+        <div class="modal-dialog modal-lg">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        @(isEditing ? "Edit Recipe" : "Add Recipe")
+                    </h5>
+
+                    <button class="btn-close"
+                            @onclick="CloseModal">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- NAME -->
+                    <div class="mb-3">
+                        <label class="form-label">Recipe Name</label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="formRecipe.Name" />
+                    </div>
+
+                    <!-- SERVINGS -->
+                    <div class="mb-3">
+                        <label class="form-label">Servings</label>
+
+                        <InputNumber class="form-control"
+                                     @bind-Value="formRecipe.Servings" />
+                    </div>
+
+                    <!-- CATEGORY -->
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+
+                        <select class="form-select"
+                                @bind="formRecipe.Category">
+
+                            <option value="">Select</option>
+
+                            @foreach (var cat in Categories)
+                            {
+                                <option value="@cat">@cat</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- CUISINE -->
+                    <div class="mb-3">
+                        <label class="form-label">Cuisine</label>
+
+                        <select class="form-select"
+                                @bind="formRecipe.Cuisine">
+
+                            <option value="">Select</option>
+
+                            @foreach (var c in Cuisines)
+                            {
+                                <option value="@c">@c</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- IMAGE -->
+                    <div class="mb-3">
+                        <label class="form-label">Image URL</label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="formRecipe.ImagePath" />
+                    </div>
+
+                    <!-- INGREDIENTS -->
+                    <div class="mb-3">
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5>Ingredients</h5>
+
+                            <button class="btn btn-success btn-sm"
+                                    @onclick="AddIngredientRow">
+                                + Add
+                            </button>
+                        </div>
+
+                        @foreach (var row in formIngredientRows)
+                        {
+                            <div class="row g-2 mb-2">
+
+                                <div class="col-md-7">
+
+                                    <select class="form-select"
+                                            @bind="row.IngredientId">
+
+                                        <option value="0">Choose Ingredient</option>
+
+                                        @foreach (var ing in allIngredients)
+                                        {
+                                            <option value="@ing.Id">
+                                                @ing.Name
+                                            </option>
+                                        }
+
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+
+                                    <InputNumber class="form-control"
+                                                 @bind-Value="row.Quantity" />
+                                </div>
+
+                                <div class="col-md-2">
+
+                                    <button class="btn btn-danger w-100"
+                                            @onclick="() => RemoveIngredientRow(row)">
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- CALORIES -->
+                    <div class="alert alert-warning">
+                        🔥 Total Calories:
+                        <strong>@PreviewCalories().ToString("F0") kcal</strong>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(validationMessage))
+                    {
+                        <div class="alert alert-danger">
+                            @validationMessage
+                        </div>
+                    }
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button class="btn btn-secondary"
+                            @onclick="CloseModal">
+                        Cancel
+                    </button>
+
+                    <button class="btn btn-primary"
+                            @onclick="SaveRecipe">
+
+                        @(isEditing ? "Save Changes" : "Add Recipe")
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- DELETE MODAL -->
+@if (recipeToDelete is not null)
+{
+    <div class="modal fade show d-block"
+         style="background-color: rgba(0,0,0,0.5);">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <div class="modal-body">
+                    Delete <strong>@recipeToDelete.Name</strong> ?
+                </div>
+
+                <div class="modal-footer">
+
+                    <button class="btn btn-secondary"
+                            @onclick="() => recipeToDelete = null">
+                        Cancel
+                    </button>
+
+                    <button class="btn btn-danger"
+                            @onclick="ExecuteDelete">
+                        Delete
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    static readonly string[] Categories =
+    {
+        "Breakfast",
+        "Lunch",
+        "Dinner",
+        "Dessert",
+        "Snack"
+    };
+
+    static readonly string[] Cuisines =
+    {
+        "Tunisian",
+        "French",
+        "Italian",
+        "Mediterranean",
+        "American",
+        "Asian",
+        "Mexican",
+        "Other"
+    };
+
+    private List<Recipe> filteredRecipes = new();
+    private List<Recipe> allRecipes = new();
+    private List<Ingredient> allIngredients = new();
+
+    private Recipe formRecipe = new();
+    private Recipe? recipeToDelete;
+
+    private bool showModal;
+    private bool isEditing;
+
+    private string searchTerm = "";
+    private string selectedCategory = "";
+    private string selectedCuisine = "";
+    private string validationMessage = "";
+
+    private List<IngredientRowVm> formIngredientRows = new();
+
+    private class IngredientRowVm
+    {
+        public int IngredientId { get; set; }
+        public double Quantity { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        allRecipes = await RecipeService.GetAllRecipesAsync();
+        filteredRecipes = allRecipes;
+    }
+
+    private async Task<bool> IsAdminAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        return authState.User.IsInRole("Admin");
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        await ApplyFilters();
+    }
+
+    private async Task OnCategoryChange(ChangeEventArgs e)
+    {
+        selectedCategory = e.Value?.ToString() ?? "";
+        await ApplyFilters();
+    }
+
+    private async Task OnCuisineChange(ChangeEventArgs e)
+    {
+        selectedCuisine = e.Value?.ToString() ?? "";
+        await ApplyFilters();
+    }
+
+    private async Task ApplyFilters()
+    {
+        filteredRecipes = await RecipeService.SearchRecipesAsync(
+            searchTerm,
+            selectedCategory,
+            selectedCuisine);
+    }
+
+    private void ViewRecipe(int id)
+    {
+        Nav.NavigateTo($"/recipes/{id}");
+    }
+
+    private async Task OpenAddModal()
+    {
+        if (!await IsAdminAsync())
+            return;
+
+        allIngredients = await IngredientService.GetIngredientsAsync();
+
+        formRecipe = new Recipe
+        {
+            Servings = 1
+        };
+
+        formIngredientRows = new();
+
+        validationMessage = "";
+
+        isEditing = false;
+
+        showModal = true;
+    }
+
+    private async Task OpenEditModal(Recipe recipe)
+    {
+        if (!await IsAdminAsync())
+            return;
+
+        allIngredients = await IngredientService.GetIngredientsAsync();
+
+        formRecipe = new Recipe
+        {
+            Id = recipe.Id,
+            Name = recipe.Name,
+            Servings = recipe.Servings,
+            Category = recipe.Category,
+            Cuisine = recipe.Cuisine,
+            ImagePath = recipe.ImagePath,
+            VideoLink = recipe.VideoLink
+        };
+
+        formIngredientRows = recipe.RecipeIngredients
+            .Select(x => new IngredientRowVm
+            {
+                IngredientId = x.IngredientId,
+                Quantity = x.Quantity
+            })
+            .ToList();
+
+        isEditing = true;
+
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
+    private void AddIngredientRow()
+    {
+        formIngredientRows.Add(new IngredientRowVm());
+    }
+
+    private void RemoveIngredientRow(IngredientRowVm row)
+    {
+        formIngredientRows.Remove(row);
+    }
+
+    private double PreviewCalories()
+    {
+        double total = 0;
+
+        foreach (var row in formIngredientRows)
+        {
+            var ing = allIngredients
+                .FirstOrDefault(i => i.Id == row.IngredientId);
+
+            if (ing is not null)
+                total += row.Quantity * ing.Calories;
+        }
+
+        return total;
+    }
+
+    private async Task SaveRecipe()
+    {
+        if (!await IsAdminAsync())
+        {
+            validationMessage = "Only Admin can modify recipes.";
+            return;
+        }
+
+        formRecipe.RecipeIngredients = formIngredientRows
+            .Where(x => x.IngredientId > 0 && x.Quantity > 0)
+            .Select(x => new RecipeIngredients
+            {
+                IngredientId = x.IngredientId,
+                Quantity = x.Quantity
+            })
+            .ToList();
+
+        if (isEditing)
+            await RecipeService.UpdateRecipeAsync(formRecipe);
+        else
+            await RecipeService.AddRecipeAsync(formRecipe);
+
+        allRecipes = await RecipeService.GetAllRecipesAsync();
+        filteredRecipes = allRecipes;
+
+        showModal = false;
+    }
+
+    private void ConfirmDelete(Recipe recipe)
+    {
+        recipeToDelete = recipe;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (!await IsAdminAsync())
+            return;
+
+        if (recipeToDelete is null)
+            return;
+
+        await RecipeService.DeleteRecipeAsync(recipeToDelete.Id);
+
+        allRecipes = await RecipeService.GetAllRecipesAsync();
+        filteredRecipes = allRecipes;
+
+        recipeToDelete = null;
+    }
+}

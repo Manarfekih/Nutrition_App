@@ -1,0 +1,165 @@
+
+/*  Back button  */
+.btn-back {
+    background: none;
+    border: 1px solid #d1d5db;
+    padding: .4rem .9rem;
+    border-radius: .4rem;
+    cursor: pointer;
+    color: #374151;
+    font-size: .88rem;
+    margin-bottom: 1.25rem;
+    display: inline-block;
+}
+.btn-back:hover { background: #f3f4f6; }
+
+/*  Hero banner  */
+.detail-hero {
+    border-radius: 1rem;
+    overflow: hidden;
+    height: 260px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+.detail-hero.no-image {
+    background: linear-gradient(135deg, #166534, #16a34a);
+}
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.5rem;
+}
+.recipe-name   { color: #fff; font-size: 2rem; font-weight: 800; margin: .3rem 0; }
+.servings-note { color: rgba(255,255,255,.8); margin: 0; font-size: .9rem; }
+
+/*  Category / Cuisine badges  */
+.badge-row { display: flex; gap: .4rem; }
+.badge {
+    padding: .25rem .6rem;
+    border-radius: .375rem;
+    font-size: .75rem;
+    font-weight: 700;
+}
+.badge-category { background: #dcfce7; color: #15803d; }
+.badge-cuisine  { background: #dbeafe; color: #1d4ed8; }
+
+/*  Calorie summary cards  */
+.calorie-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.summary-card {
+    background: #fff;
+    border-radius: .875rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+}
+.summary-card.accent {
+    background: #f0fdf4;
+    border: 2px solid #86efac;
+}
+.summary-icon  { font-size: 1.5rem; }
+.summary-value { font-size: 1.75rem; font-weight: 800; color: #16a34a; }
+.summary-label {
+    font-size: .75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+/*  Section cards (ingredient table, per-serving, video)  */
+.section-card {
+    background: #fff;
+    border-radius: .875rem;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    margin-bottom: 1.25rem;
+}
+.section-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 1rem; }
+.empty-text    { color: #9ca3af; font-size: .9rem; }
+
+/*  Ingredient table  */
+.ingredient-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .9rem;
+}
+.ingredient-table th {
+    text-align: left;
+    padding: .55rem .75rem;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #6b7280;
+    border-bottom: 2px solid #e5e7eb;
+}
+.ingredient-table td {
+    padding: .55rem .75rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+.ingredient-table tr:hover td { background: #f9fafb; }
+
+.center   { text-align: center; }
+.cal-cell { color: #15803d; font-weight: 600; }
+.ing-name { display: flex; align-items: center; gap: .5rem; font-weight: 500; }
+.ing-img  { width: 24px; height: 24px; border-radius: .25rem; object-fit: cover; }
+
+/*  Calorie % progress bar  */
+.bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    width: 120px;
+}
+.bar-fill {
+    height: 8px;
+    border-radius: 4px;
+    background: #16a34a;
+    min-width: 2px;
+    transition: width .3s;
+}
+.bar-label { font-size: .75rem; color: #6b7280; white-space: nowrap; }
+
+/*  Table footer totals  */
+.total-label {
+    text-align: right;
+    font-weight: 700;
+    color: #374151;
+    padding-right: .75rem;
+}
+.total-value { color: #16a34a; font-weight: 800; font-size: 1rem; }
+
+/*  YouTube link button  */
+.video-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: #fff;
+    background: #dc2626;
+    padding: .6rem 1.2rem;
+    border-radius: .5rem;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: .9rem;
+}
+.video-link:hover { background: #b91c1c; }
+
+/*  Loading / not-found states  */
+.loading-state,
+.not-found {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+}

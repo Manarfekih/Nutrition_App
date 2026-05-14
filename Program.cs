@@ -23,6 +23,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.Configure<SeedAdminOptions>(
     builder.Configuration.GetSection(SeedAdminOptions.SectionName));
+builder.Services.AddScoped<RecipeService>();
 
 // DB
 builder.Services.AddDbContext<AppDbContext>(options =>

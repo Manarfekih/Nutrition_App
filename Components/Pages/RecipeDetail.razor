@@ -1,0 +1,200 @@
+@page "/recipes/{Id:int}"
+@using Recipe_Nutrition_App.Models
+@using Recipe_Nutrition_App.Services
+
+@inject RecipeService    RecipeService
+@inject NavigationManager Nav
+
+@rendermode InteractiveServer
+
+<PageTitle>@(recipe?.Name ?? "Recipe Detail")</PageTitle>
+
+@if (isLoading)
+{
+    <div class="loading-state">Loading recipe…</div>
+}
+else if (recipe is null)
+{
+    <div class="not-found">
+        <p>Recipe not found.</p>
+        <button class="btn-back" @onclick="GoBack">← Back to Recipes</button>
+    </div>
+}
+else
+{
+    <!--  BACK BUTTON  -->
+    <button class="btn-back" @onclick="GoBack">← Back to Recipes</button>
+
+    <!--  HERO BANNER  -->
+    <div class="detail-hero @(string.IsNullOrWhiteSpace(recipe.ImagePath) ? "no-image" : "")"
+         style="@(string.IsNullOrWhiteSpace(recipe.ImagePath) ? "" : $"background-image:url('{recipe.ImagePath}')")">
+        <div class="hero-overlay">
+            <div class="badge-row">
+                <span class="badge badge-category">@recipe.Category</span>
+                <span class="badge badge-cuisine">@recipe.Cuisine</span>
+            </div>
+            <h1 class="recipe-name">@recipe.Name</h1>
+            <p class="servings-note">@recipe.Servings servings</p>
+        </div>
+    </div>
+
+    <!--  CALORIE SUMMARY CARDS  -->
+    <div class="calorie-summary">
+        <div class="summary-card accent">
+            <span class="summary-icon">🔥</span>
+            <span class="summary-value">@totalCalories.ToString("F0")</span>
+            <span class="summary-label">Total kcal</span>
+        </div>
+        <div class="summary-card">
+            <span class="summary-icon">🍽️</span>
+            <span class="summary-value">@caloriesPerServing.ToString("F0")</span>
+            <span class="summary-label">kcal / serving</span>
+        </div>
+        <div class="summary-card">
+            <span class="summary-icon">🧑‍🤝‍🧑</span>
+            <span class="summary-value">@recipe.Servings</span>
+            <span class="summary-label">Servings</span>
+        </div>
+        <div class="summary-card">
+            <span class="summary-icon">🥘</span>
+            <span class="summary-value">@recipe.RecipeIngredients.Count</span>
+            <span class="summary-label">Ingredients</span>
+        </div>
+    </div>
+
+    <!--  INGREDIENT BREAKDOWN TABLE  -->
+    <div class="section-card">
+        <h2 class="section-title">🥦 Ingredients & Calorie Breakdown</h2>
+
+        @if (!recipe.RecipeIngredients.Any())
+        {
+            <p class="empty-text">No ingredients have been added to this recipe yet.</p>
+        }
+        else
+        {
+            <table class="ingredient-table">
+                <thead>
+                    <tr>
+                        <th>Ingredient</th>
+                        <th class="center">Qty</th>
+                        <th class="center">Unit</th>
+                        <th class="center">Cal / unit</th>
+                        <th class="center">Subtotal</th>
+                        <th class="center">% of recipe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ri in recipe.RecipeIngredients
+                                    .OrderByDescending(r => r.Quantity * r.Ingredient.Calories))
+                    {
+                        var sub = ri.Quantity * ri.Ingredient.Calories;
+                        var pct = totalCalories > 0 ? sub / totalCalories * 100 : 0;
+
+                        <tr>
+                            <td class="ing-name">
+                                @if (!string.IsNullOrWhiteSpace(ri.Ingredient.ImagePath))
+                                {
+                                    <img src="@ri.Ingredient.ImagePath"
+                                         class="ing-img"
+                                         alt="@ri.Ingredient.Name" />
+                                }
+                                @ri.Ingredient.Name
+                            </td>
+                            <td class="center">@ri.Quantity</td>
+                            <td class="center">@ri.Ingredient.Unit</td>
+                            <td class="center">@ri.Ingredient.Calories</td>
+                            <td class="center cal-cell">@sub.ToString("F0") kcal</td>
+                            <td class="center">
+                                <div class="bar-wrap">
+                                    <div class="bar-fill" style="width:@pct.ToString("F0")%"></div>
+                                    <span class="bar-label">@pct.ToString("F0")%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="total-label">Total</td>
+                        <td class="center total-value">@totalCalories.ToString("F0") kcal</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        }
+    </div>
+
+    <!--  PER-SERVING TABLE  -->
+    @if (recipe.Servings > 1 && recipe.RecipeIngredients.Any())
+    {
+        <div class="section-card">
+            <h2 class="section-title">🍽️ Per-Serving Breakdown</h2>
+            <table class="ingredient-table">
+                <thead>
+                    <tr>
+                        <th>Ingredient</th>
+                        <th class="center">Qty / serving</th>
+                        <th class="center">kcal / serving</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ri in recipe.RecipeIngredients
+                                    .OrderByDescending(r => r.Quantity * r.Ingredient.Calories))
+                    {
+                        <tr>
+                            <td class="ing-name">@ri.Ingredient.Name</td>
+                            <td class="center">@((ri.Quantity / recipe.Servings).ToString("F2"))</td>
+                            <td class="center cal-cell">
+                                @((ri.Quantity * ri.Ingredient.Calories / recipe.Servings).ToString("F0")) kcal
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" class="total-label">Total per serving</td>
+                        <td class="center total-value">@caloriesPerServing.ToString("F0") kcal</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+
+    <!--  VIDEO LINK  -->
+    @if (!string.IsNullOrWhiteSpace(recipe.VideoLink))
+    {
+        <div class="section-card">
+            <h2 class="section-title">🎬 Video Tutorial</h2>
+            <a href="@recipe.VideoLink" target="_blank" rel="noopener noreferrer" class="video-link">
+                ▶ Watch on YouTube
+            </a>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Recipe? recipe;
+    private double  totalCalories;
+    private double  caloriesPerServing;
+    private bool    isLoading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+
+        recipe = await RecipeService.GetRecipeByIdAsync(Id);
+
+        if (recipe is not null)
+        {
+            // Pre-compute once so the template doesn't call the methods repeatedly
+            totalCalories      = RecipeService.CalculateTotalCalories(recipe);
+            caloriesPerServing = RecipeService.CalculateCaloriesPerServing(recipe);
+        }
+
+        isLoading = false;
+    }
+
+    private void GoBack() => Nav.NavigateTo("/recipes");
+}
