@@ -202,6 +202,20 @@ namespace Recipe_Nutrition_App.Services
 
             return buckets;
         }
+
+        /// Returns a list of CategoryStat objects for Radzen charts (TP9 LINQ GroupBy).
+        public async Task<List<CategoryStat>> GetCategoryStatsAsync()
+        {
+            return await _context.Recipes
+                .GroupBy(r => r.Category)
+                .Select(g => new CategoryStat
+                {
+                    CategoryName = g.Key ?? "Unknown",
+                    Count        = g.Count()
+                })
+                .OrderByDescending(x => x.Count)
+                .ToListAsync();
+        }
     }
 
     //  DTO returned by GetStatsByCuisineAsync 
@@ -210,5 +224,12 @@ namespace Recipe_Nutrition_App.Services
         public string  Cuisine         { get; set; } = string.Empty;
         public int     RecipeCount     { get; set; }
         public double  AverageCalories { get; set; }
+    }
+
+    // DTO for category chart (TP9)
+    public class CategoryStat
+    {
+        public string CategoryName { get; set; } = string.Empty;
+        public int    Count        { get; set; }
     }
 }

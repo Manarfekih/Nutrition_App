@@ -1,0 +1,19 @@
+<div class="card text-white @BackgroundColorClass h-100 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="card-title mb-0 opacity-75">@Title</h6>
+                <h3 class="my-2 fw-bold">@Value</h3>
+            </div>
+            <i class="bi @IconClass" style="font-size: 2.5rem; opacity: 0.4;"></i>
+        </div>
+    </div>
+</div>
+
+@code {
+    // [Parameter]: these values will be provided by the parent page (TP8)
+    [Parameter] public string Title                { get; set; } = "KPI";
+    [Parameter] public string Value                { get; set; } = "0";
+    [Parameter] public string BackgroundColorClass { get; set; } = "bg-primary";
+    [Parameter] public string IconClass            { get; set; } = "bi-graph-up";
+}

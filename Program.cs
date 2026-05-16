@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Components.Authorization;
 using Recipe_Nutrition_App.Components.Auth;
+using Radzen;
 
 using Microsoft.EntityFrameworkCore;
 using Recipe_Nutrition_App.Data;
@@ -40,6 +41,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 // Services
 builder.Services.AddScoped<IngredientService>();
+
+builder.Services.AddRadzenComponents();
 
 var app = builder.Build();
 

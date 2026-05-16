@@ -1,30 +1,104 @@
 @page "/analytics"
 @attribute [Authorize]
+@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Authorization
-@using Recipe_Nutrition_App.Models
 @using Recipe_Nutrition_App.Services
 
 @inject RecipeService RecipeService
-@inject IJSRuntime JS
-
-@rendermode InteractiveServer
 
 <PageTitle>Analytics</PageTitle>
 
 <div class="container-fluid py-4 px-3 px-md-4">
 
-    <!-- Header -->
-    <div class="d-flex align-items-start justify-content-between mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
             <h2 class="fw-bold mb-1">
                 <i class="bi bi-graph-up-arrow me-2 text-success"></i>Analytics
             </h2>
-            <p class="text-muted mb-0">Deep insights into your nutrition & recipe data</p>
+            <p class="text-muted mb-0">Multi-criteria filtering with server-side IQueryable (TP10)</p>
         </div>
-        <button class="btn btn-outline-success btn-sm" @onclick="RefreshAsync">
+        <button class="btn btn-outline-success btn-sm" @onclick="ExecuteSearch">
             <i class="bi bi-arrow-clockwise me-1"></i>Refresh
         </button>
+    </div>
+
+    <!-- ===== FILTER BAR : real-time search + IQueryable ===== -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+
+                <!--  Text search — @bind:event="oninput" fires on every keystroke -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold small">
+                        <i class="bi bi-search me-1"></i>Search (name or ingredient)
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text"
+                               @bind="SearchText"
+                               @bind:event="oninput"
+                               class="form-control"
+                               placeholder="Search by recipe name or ingredient..." />
+                    </div>
+                </div>
+
+                <!-- Category dropdown -->
+                <div class="col-6 col-md-4">
+                    <label class="form-label fw-semibold small">
+                        <i class="bi bi-tag me-1"></i>Category
+                    </label>
+                    <select class="form-select" @bind="SelectedCategory" @bind:event="onchange"
+                            @bind:after="ExecuteSearch">
+                        <option value="">All Categories</option>
+                        @foreach (var cat in AllCategories)
+                        {
+                            <option value="@cat">@cat</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Cuisine dropdown -->
+                <div class="col-6 col-md-4">
+                    <label class="form-label fw-semibold small">
+                        <i class="bi bi-globe2 me-1"></i>Cuisine
+                    </label>
+                    <select class="form-select" @bind="SelectedCuisine" @bind:event="onchange"
+                            @bind:after="ExecuteSearch">
+                        <option value="">All Cuisines</option>
+                        @foreach (var c in AllCuisines)
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <!-- Active filter badges -->
+            @if (!string.IsNullOrEmpty(SearchText) || !string.IsNullOrEmpty(SelectedCategory) || !string.IsNullOrEmpty(SelectedCuisine))
+            {
+                <div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+                    <small class="text-muted">Active filters:</small>
+                    @if (!string.IsNullOrEmpty(SearchText))
+                    {
+                        <span class="badge bg-dark">
+                            <i class="bi bi-search me-1"></i>@SearchText
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(SelectedCategory))
+                    {
+                        <span class="badge bg-success">@SelectedCategory</span>
+                    }
+                    @if (!string.IsNullOrEmpty(SelectedCuisine))
+                    {
+                        <span class="badge bg-primary">@SelectedCuisine</span>
+                    }
+                    <button class="btn btn-link btn-sm p-0 text-muted" @onclick="ClearAllFilters">
+                        Clear all
+                    </button>
+                </div>
+            }
+        </div>
     </div>
 
     @if (isLoading)
@@ -35,487 +109,220 @@
             </div>
         </div>
     }
-    else if (!allRecipes.Any())
-    {
-        <div class="text-center py-5">
-            <i class="bi bi-inbox display-4 text-muted"></i>
-            <h5 class="mt-3 text-muted">No recipes found.</h5>
-            <p class="text-muted">Add some recipes to start seeing analytics.</p>
-        </div>
-    }
     else
     {
-        <!-- Filter Bar -->
-        <div class="analytics-filter-bar mb-4">
-            <div class="row g-2 align-items-end">
-                <div class="col-12 col-md-4">
-                    <label class="form-label small fw-semibold mb-1">Filter by Category</label>
-                    <select class="form-select form-select-sm" @onchange="OnCategoryFilter">
-                        <option value="">All Categories</option>
-                        @foreach (var cat in allCategories)
-                        {
-                            <option value="@cat">@cat</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label class="form-label small fw-semibold mb-1">Filter by Cuisine</label>
-                    <select class="form-select form-select-sm" @onchange="OnCuisineFilter">
-                        <option value="">All Cuisines</option>
-                        @foreach (var c in allCuisines)
-                        {
-                            <option value="@c">@c</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label class="form-label small fw-semibold mb-1">Calorie Range (max kcal)</label>
-                    <input type="range" class="form-range" min="0" max="@maxCalories"
-                           step="50" value="@calorieFilter"
-                           @oninput="OnCalorieFilter" />
-                    <div class="d-flex justify-content-between">
-                        <small class="text-muted">0</small>
-                        <small class="text-success fw-semibold">
-                            @(calorieFilter >= maxCalories ? "Any" : $"≤ {calorieFilter} kcal")
-                        </small>
-                        <small class="text-muted">@maxCalories</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active filter badges -->
-            @if (!string.IsNullOrEmpty(selectedCategory) || !string.IsNullOrEmpty(selectedCuisine) || calorieFilter < maxCalories)
-            {
-                <div class="mt-2 d-flex flex-wrap gap-2">
-                    @if (!string.IsNullOrEmpty(selectedCategory))
-                    {
-                        <span class="badge bg-success">
-                            @selectedCategory
-                            <button class="btn-close btn-close-white btn-close-sm ms-1"
-                                    style="font-size:.5rem;"
-                                    @onclick='() => ClearFilter("category")'></button>
-                        </span>
-                    }
-                    @if (!string.IsNullOrEmpty(selectedCuisine))
-                    {
-                        <span class="badge bg-primary">
-                            @selectedCuisine
-                            <button class="btn-close btn-close-white btn-close-sm ms-1"
-                                    style="font-size:.5rem;"
-                                    @onclick='() => ClearFilter("cuisine")'></button>
-                        </span>
-                    }
-                    @if (calorieFilter < maxCalories)
-                    {
-                        <span class="badge bg-warning text-dark">
-                            ≤ @calorieFilter kcal
-                            <button class="btn-close btn-close-sm ms-1"
-                                    style="font-size:.5rem;"
-                                    @onclick='() => ClearFilter("calorie")'></button>
-                        </span>
-                    }
-                    <button class="btn btn-link btn-sm p-0 text-muted" @onclick="ClearAllFilters">
-                        Clear all
-                    </button>
-                </div>
-            }
-        </div>
-
-        <!-- Results count -->
+        <!-- Result count -->
         <p class="text-muted small mb-3">
-            Showing <strong>@filteredRecipes.Count</strong> of <strong>@allRecipes.Count</strong> recipes
+            Showing <strong class="text-success">@FilteredRecipes.Count</strong> recipes
+            @if (!string.IsNullOrEmpty(SearchText) || !string.IsNullOrEmpty(SelectedCategory) || !string.IsNullOrEmpty(SelectedCuisine))
+            {
+                <span>(filtered by server-side IQueryable — TP10)</span>
+            }
         </p>
 
-        <!-- Stats Summary (filtered) -->
+        <!-- ===== KPI tiles (TP8: KpiCard) for filtered result ===== -->
         <div class="row g-3 mb-4">
             <div class="col-6 col-md-3">
-                <div class="stat-tile">
-                    <div class="stat-value text-success">@filteredRecipes.Count</div>
-                    <div class="stat-label">Recipes</div>
-                </div>
+                <KpiCard Title="Recipes Found"
+                         Value="@FilteredRecipes.Count.ToString()"
+                         BackgroundColorClass="bg-success"
+                         IconClass="bi-funnel-fill" />
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-tile">
-                    <div class="stat-value text-warning">@FilteredAvgCal.ToString("F0")</div>
-                    <div class="stat-label">Avg Total kcal</div>
-                </div>
+                <KpiCard Title="Avg Total kcal"
+                         Value="@($"{FilteredAvgTotal:F0} kcal")"
+                         BackgroundColorClass="bg-warning"
+                         IconClass="bi-fire" />
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-tile">
-                    <div class="stat-value text-primary">@FilteredAvgPerServing.ToString("F0")</div>
-                    <div class="stat-label">Avg kcal / Serving</div>
-                </div>
+                <KpiCard Title="Avg kcal/Serving"
+                         Value="@($"{FilteredAvgServing:F0} kcal")"
+                         BackgroundColorClass="bg-primary"
+                         IconClass="bi-person-fill" />
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-tile">
-                    <div class="stat-value text-danger">@FilteredMaxCal.ToString("F0")</div>
-                    <div class="stat-label">Highest kcal</div>
-                </div>
+                <KpiCard Title="Highest kcal"
+                         Value="@($"{FilteredMax:F0} kcal")"
+                         BackgroundColorClass="bg-danger"
+                         IconClass="bi-trophy-fill" />
             </div>
         </div>
 
-        <!-- Charts -->
+        <!-- ===== CHARTS — TP9: Radzen, data from filtered result ===== -->
         <div class="row g-4 mb-4">
-            <div class="col-md-6">
-                <div class="chart-card">
-                    <div class="chart-card-header">
-                        <i class="bi bi-pie-chart-fill text-success me-2"></i>Recipes by Category
+
+            <!-- Donut: filtered category distribution -->
+            <div class="col-md-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-pie-chart-fill text-success me-2"></i>Category Breakdown
+                        </h5>
                     </div>
-                    <div class="chart-wrap">
-                        <canvas id="anCategoryChart"></canvas>
+                    <div class="card-body">
+                        @if (FilteredCategoryStats.Any())
+                        {
+                            <RadzenChart>
+                                <RadzenDonutSeries Data="@FilteredCategoryStats"
+                                                  CategoryProperty="CategoryName"
+                                                  ValueProperty="Count" />
+                            </RadzenChart>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4">No data</p>
+                        }
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="chart-card">
-                    <div class="chart-card-header">
-                        <i class="bi bi-bar-chart text-primary me-2"></i>Recipes by Cuisine
+
+            <!-- Column: filtered cuisine distribution -->
+            <div class="col-md-7">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bar-chart text-primary me-2"></i>Cuisine Distribution
+                        </h5>
                     </div>
-                    <div class="chart-wrap">
-                        <canvas id="anCuisineChart"></canvas>
+                    <div class="card-body">
+                        @if (FilteredCuisineStats.Any())
+                        {
+                            <RadzenChart>
+                                <RadzenColumnSeries Data="@FilteredCuisineStats"
+                                                   CategoryProperty="Cuisine"
+                                                   ValueProperty="RecipeCount"
+                                                   Title="Recipes"
+                                                   Fill="#3498db" />
+                                <RadzenLegend Visible="false" />
+                            </RadzenChart>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4">No data</p>
+                        }
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4 mb-4">
-            <div class="col-md-6">
-                <div class="chart-card">
-                    <div class="chart-card-header">
-                        <i class="bi bi-graph-up text-warning me-2"></i>Avg Calories by Cuisine
-                    </div>
-                    <div class="chart-wrap">
-                        <canvas id="anAvgCalChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="chart-card">
-                    <div class="chart-card-header">
-                        <i class="bi bi-distribute-vertical text-danger me-2"></i>Calorie Distribution
-                    </div>
-                    <div class="chart-wrap">
-                        <canvas id="anRangeChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Full Recipe Table -->
-        <div class="chart-card">
-            <div class="chart-card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-table me-2 text-success"></i>Recipe Detail Table</span>
+        <!-- ===== RECIPE TABLE — TP8: RecipeTable component ===== -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-table me-2 text-success"></i>Recipe Detail
+                    <span class="badge bg-secondary ms-2">@FilteredRecipes.Count</span>
+                </h5>
                 <div class="d-flex gap-2 align-items-center">
-                    <input class="form-control form-control-sm" style="max-width:200px"
-                    placeholder="Search..." value="@tableSearch"
-                    @oninput="OnTableSearch" />
-                    <select class="form-select form-select-sm" style="max-width:150px" @onchange="OnSortChange">
-                        <option value="name">Sort: Name</option>
-                        <option value="calories_desc">kcal ▼</option>
-                        <option value="calories_asc">kcal ▲</option>
-                        <option value="serving_desc">Per Serving ▼</option>
+                    <label class="small text-muted mb-0">Sort:</label>
+                    <select class="form-select form-select-sm" style="width:auto"
+                            @bind="SortMode" @bind:after="ApplySort">
+                        <option value="name">Name A→Z</option>
+                        <option value="cal_desc">kcal ↓</option>
+                        <option value="cal_asc">kcal ↑</option>
+                        <option value="serving_desc">kcal/Serving ↓</option>
                     </select>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Recipe</th>
-                            <th>Category</th>
-                            <th>Cuisine</th>
-                            <th class="text-end">Total kcal</th>
-                            <th class="text-end">kcal/Serving</th>
-                            <th>Servings</th>
-                            <th>Ingredients</th>
-                            <th>Level</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var r in tableRecipes)
-                        {
-                            var total   = RecipeService.CalculateTotalCalories(r);
-                            var perServ = RecipeService.CalculateCaloriesPerServing(r);
-                            var (levelText, levelColor) =
-                                total < 300 ? ("Low",    "success") :
-                                total < 700 ? ("Medium", "warning") :
-                                              ("High",   "danger");
-                            <tr>
-                                <td class="fw-semibold">@r.Name</td>
-                                <td><span class="badge bg-success bg-opacity-75">@r.Category</span></td>
-                                <td><span class="badge bg-secondary">@r.Cuisine</span></td>
-                                <td class="text-end">@total.ToString("F0")</td>
-                                <td class="text-end">@perServ.ToString("F0")</td>
-                                <td class="text-center">@r.Servings</td>
-                                <td class="text-center">@r.RecipeIngredients.Count</td>
-                                <td><span class="badge bg-@levelColor">@levelText</span></td>
-                            </tr>
-                        }
-                        @if (!tableRecipes.Any())
-                        {
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-3">No matching recipes.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+            <div class="card-body p-0">
+                <!-- TP8: RecipeTable receives filtered+sorted list via [Parameter] -->
+                <RecipeTable Recipes="SortedRecipes" ShowActions="false" />
             </div>
         </div>
     }
 </div>
 
-<style>
-    .analytics-filter-bar { background:#fff; border-radius:12px; padding:1.2rem 1.4rem; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-    .stat-tile { background:#fff; border-radius:12px; padding:1rem 1.2rem; box-shadow:0 2px 8px rgba(0,0,0,.06); text-align:center; }
-    .stat-value { font-size:1.8rem; font-weight:700; line-height:1; }
-    .stat-label { font-size:.78rem; color:#6c757d; margin-top:4px; }
-    .chart-card { background:#fff; border-radius:12px; padding:1.2rem 1.4rem; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-    .chart-card-header { font-weight:600; font-size:.95rem; margin-bottom:.9rem; color:#2c3e50; }
-    .chart-wrap { position:relative; max-height:260px; }
-</style>
-
 @code {
     private bool isLoading = true;
-    private bool chartsDrawn = false;
 
-    private List<Recipe> allRecipes      = new();
-    private List<Recipe> filteredRecipes = new();
-    private List<Recipe> tableRecipes    = new();
+    // Filter state (TP10)
+    private List<Recipe> FilteredRecipes = new();
+    private List<string> AllCategories   = new();
+    private List<string> AllCuisines     = new();
 
-    private List<string> allCategories = new();
-    private List<string> allCuisines   = new();
+    private string _searchText = "";
+    private string SelectedCategory = "";
+    private string SelectedCuisine  = "";
+    private string SortMode         = "name";
 
-    private string selectedCategory = "";
-    private string selectedCuisine  = "";
-    private double calorieFilter;
-    private double maxCalories = 2000;
+    //  SearchText property with setter that auto-triggers IQueryable search
+    private string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            _ = ExecuteSearch();   // fires SQL search on every keystroke
+        }
+    }
 
-    private string tableSearch = "";
-    private string sortMode    = "name";
+    // Computed stats for KPI tiles (from filtered list)
+    private double FilteredAvgTotal   => FilteredRecipes.Any() ? FilteredRecipes.Average(r => RecipeService.CalculateTotalCalories(r)) : 0;
+    private double FilteredAvgServing => FilteredRecipes.Any() ? FilteredRecipes.Average(r => RecipeService.CalculateCaloriesPerServing(r)) : 0;
+    private double FilteredMax        => FilteredRecipes.Any() ? FilteredRecipes.Max(r => RecipeService.CalculateTotalCalories(r)) : 0;
 
-    // Filtered stats
-    private double FilteredAvgCal      => filteredRecipes.Any() ? filteredRecipes.Average(r => RecipeService.CalculateTotalCalories(r)) : 0;
-    private double FilteredAvgPerServing => filteredRecipes.Any() ? filteredRecipes.Average(r => RecipeService.CalculateCaloriesPerServing(r)) : 0;
-    private double FilteredMaxCal      => filteredRecipes.Any() ? filteredRecipes.Max(r => RecipeService.CalculateTotalCalories(r)) : 0;
+    // Computed chart data from filtered list (TP9 GroupBy in memory on already-filtered data)
+    private List<CategoryStat> FilteredCategoryStats =>
+        FilteredRecipes
+            .GroupBy(r => r.Category ?? "Unknown")
+            .Select(g => new CategoryStat { CategoryName = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+    private List<CuisineStats> FilteredCuisineStats =>
+        FilteredRecipes
+            .GroupBy(r => r.Cuisine ?? "Unknown")
+            .Select(g => new CuisineStats
+            {
+                Cuisine         = g.Key,
+                RecipeCount     = g.Count(),
+                AverageCalories = Math.Round(g.Average(r => RecipeService.CalculateTotalCalories(r)), 1)
+            })
+            .OrderByDescending(x => x.RecipeCount)
+            .ToList();
+
+    // Sorted version of filtered list for the table
+    private List<Recipe> SortedRecipes => SortMode switch
+    {
+        "cal_desc"     => FilteredRecipes.OrderByDescending(r => RecipeService.CalculateTotalCalories(r)).ToList(),
+        "cal_asc"      => FilteredRecipes.OrderBy(r => RecipeService.CalculateTotalCalories(r)).ToList(),
+        "serving_desc" => FilteredRecipes.OrderByDescending(r => RecipeService.CalculateCaloriesPerServing(r)).ToList(),
+        _              => FilteredRecipes.OrderBy(r => r.Name).ToList()
+    };
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadDataAsync();
-    }
+        // Load dropdown options from the full table
+        var all = await RecipeService.GetAllRecipesAsync();
+        AllCategories = all.Select(r => r.Category).Where(c => !string.IsNullOrEmpty(c))
+                           .Distinct().OrderBy(x => x).ToList()!;
+        AllCuisines   = all.Select(r => r.Cuisine).Where(c => !string.IsNullOrEmpty(c))
+                           .Distinct().OrderBy(x => x).ToList()!;
 
-    private async Task LoadDataAsync()
-    {
-        isLoading    = true;
-        chartsDrawn  = false;
-
-        allRecipes = await RecipeService.GetAllRecipesAsync();
-
-        allCategories = allRecipes.Select(r => r.Category).Where(c => !string.IsNullOrEmpty(c))
-                                  .Distinct().OrderBy(x => x).ToList()!;
-        allCuisines   = allRecipes.Select(r => r.Cuisine).Where(c => !string.IsNullOrEmpty(c))
-                                  .Distinct().OrderBy(x => x).ToList()!;
-
-        if (allRecipes.Any())
-        {
-            var max = allRecipes.Max(r => RecipeService.CalculateTotalCalories(r));
-            maxCalories   = Math.Ceiling(max / 100) * 100;
-            calorieFilter = maxCalories;
-        }
-
-        ApplyFilters();
+        await ExecuteSearch();
         isLoading = false;
     }
 
-    private async Task RefreshAsync()
+    //  Central method — sends filters to EF Core IQueryable, not in-memory
+    private async Task ExecuteSearch()
     {
-        await LoadDataAsync();
+        FilteredRecipes = await RecipeService.SearchRecipesAsync(
+            searchTerm: string.IsNullOrWhiteSpace(_searchText) ? null : _searchText,
+            category:   string.IsNullOrEmpty(SelectedCategory) ? null : SelectedCategory,
+            cuisine:    string.IsNullOrEmpty(SelectedCuisine)  ? null : SelectedCuisine
+        );
     }
 
-    private void ApplyFilters()
+    private void ApplySort()
     {
-        filteredRecipes = allRecipes.Where(r =>
-        {
-            if (!string.IsNullOrEmpty(selectedCategory) && r.Category != selectedCategory) return false;
-            if (!string.IsNullOrEmpty(selectedCuisine)  && r.Cuisine  != selectedCuisine)  return false;
-            if (calorieFilter < maxCalories && RecipeService.CalculateTotalCalories(r) > calorieFilter) return false;
-            return true;
-        }).ToList();
-
-        ApplyTableFilter();
-        chartsDrawn = false; // force chart redraw
-    }
-
-    private void ApplyTableFilter()
-    {
-        var source = filteredRecipes;
-
-        if (!string.IsNullOrWhiteSpace(tableSearch))
-        {
-            var term = tableSearch.Trim().ToLower();
-            source = source.Where(r =>
-                r.Name.ToLower().Contains(term) ||
-                r.Category.ToLower().Contains(term) ||
-                r.Cuisine.ToLower().Contains(term)).ToList();
-        }
-
-        tableRecipes = sortMode switch
-        {
-            "calories_desc"  => source.OrderByDescending(r => RecipeService.CalculateTotalCalories(r)).ToList(),
-            "calories_asc"   => source.OrderBy(r => RecipeService.CalculateTotalCalories(r)).ToList(),
-            "serving_desc"   => source.OrderByDescending(r => RecipeService.CalculateCaloriesPerServing(r)).ToList(),
-            _                => source.OrderBy(r => r.Name).ToList()
-        };
-    }
-
-    private async Task OnCategoryFilter(ChangeEventArgs e)
-    {
-        selectedCategory = e.Value?.ToString() ?? "";
-        ApplyFilters();
-        await RedrawChartsAsync();
-    }
-
-    private async Task OnCuisineFilter(ChangeEventArgs e)
-    {
-        selectedCuisine = e.Value?.ToString() ?? "";
-        ApplyFilters();
-        await RedrawChartsAsync();
-    }
-
-    private async Task OnCalorieFilter(ChangeEventArgs e)
-    {
-        if (double.TryParse(e.Value?.ToString(), out var val))
-            calorieFilter = val;
-        ApplyFilters();
-        await RedrawChartsAsync();
-    }
-
-    private void OnTableSearch(ChangeEventArgs e)
-    {
-        tableSearch = e.Value?.ToString() ?? "";
-        ApplyTableFilter();
-    }
-
-    private void OnSortChange(ChangeEventArgs e)
-    {
-        sortMode = e.Value?.ToString() ?? "name";
-        ApplyTableFilter();
-    }
-
-    private void ClearFilter(string type)
-    {
-        if (type == "category") selectedCategory = "";
-        else if (type == "cuisine") selectedCuisine = "";
-        else if (type == "calorie") calorieFilter = maxCalories;
-        ApplyFilters();
-        chartsDrawn = false;
-    }
-
-    private void ClearAllFilters()
-    {
-        selectedCategory = "";
-        selectedCuisine  = "";
-        calorieFilter    = maxCalories;
-        ApplyFilters();
-        chartsDrawn = false;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!isLoading && !chartsDrawn)
-        {
-            chartsDrawn = true;
-            await DrawChartsAsync();
-        }
-    }
-
-    private async Task RedrawChartsAsync()
-    {
-        chartsDrawn = false;
+        // SortedRecipes is a computed property — no extra action needed
         StateHasChanged();
-        await Task.Delay(60);
-        chartsDrawn = true;
-        await DrawChartsAsync();
     }
 
-    private async Task DrawChartsAsync()
+    private async Task ClearAllFilters()
     {
-        var palette = new[]
-        {
-            "rgba(39,174,96,.8)","rgba(52,152,219,.8)","rgba(241,196,15,.8)",
-            "rgba(231,76,60,.8)","rgba(155,89,182,.8)","rgba(230,126,34,.8)",
-            "rgba(26,188,156,.8)","rgba(149,165,166,.8)"
-        };
-        var borders = palette.Select(c => c.Replace(",.8)",",1)")).ToArray();
-
-        // Category doughnut
-        var catGroups = filteredRecipes.GroupBy(r => r.Category ?? "Unknown")
-                                       .ToDictionary(g => g.Key, g => g.Count());
-        if (catGroups.Any())
-        {
-            var labels = catGroups.Keys.ToArray();
-            var vals   = catGroups.Values.Cast<object>().ToArray();
-            await JS.InvokeVoidAsync("ChartInterop.createOrUpdate",
-                "anCategoryChart", "doughnut", labels,
-                new[]{ new{ data=vals, backgroundColor=palette.Take(labels.Length).ToArray(),
-                            borderColor=borders.Take(labels.Length).ToArray(), borderWidth=2, hoverOffset=8 } },
-                new{ responsive=true, maintainAspectRatio=true, plugins=new{ legend=new{ position="bottom" } } });
-        }
-
-        // Cuisine bar
-        var cuisineGroups = filteredRecipes.GroupBy(r => r.Cuisine ?? "Unknown")
-            .Select(g => new { Cuisine=g.Key, Count=g.Count(),
-                               AvgCal=Math.Round(g.Average(r => RecipeService.CalculateTotalCalories(r)),1) })
-            .OrderByDescending(x => x.Count).ToList();
-
-        if (cuisineGroups.Any())
-        {
-            var labels = cuisineGroups.Select(x => x.Cuisine).ToArray();
-            var counts = cuisineGroups.Select(x => (object)x.Count).ToArray();
-            await JS.InvokeVoidAsync("ChartInterop.createOrUpdate",
-                "anCuisineChart", "bar", labels,
-                new[]{ new{ label="Recipes", data=counts,
-                            backgroundColor=palette.Take(labels.Length).ToArray(),
-                            borderColor=borders.Take(labels.Length).ToArray(),
-                            borderWidth=2, borderRadius=6 } },
-                new{ responsive=true, maintainAspectRatio=true,
-                     plugins=new{legend=new{display=false}},
-                     scales=new{y=new{beginAtZero=true,ticks=new{stepSize=1}}} });
-
-            var avgCals = cuisineGroups.Select(x => (object)x.AvgCal).ToArray();
-            await JS.InvokeVoidAsync("ChartInterop.createOrUpdate",
-                "anAvgCalChart", "bar", labels,
-                new[]{ new{ label="Avg kcal", data=avgCals,
-                            backgroundColor="rgba(241,196,15,.75)", borderColor="rgba(241,196,15,1)",
-                            borderWidth=2, borderRadius=6 } },
-                new{ indexAxis="y", responsive=true, maintainAspectRatio=true,
-                     plugins=new{legend=new{display=false}},
-                     scales=new{x=new{beginAtZero=true}} });
-        }
-
-        // Calorie range
-        var buckets = new Dictionary<string,int>
-        {
-            { "< 200",   0 },{ "200–500",  0 },{ "500–800",  0 },
-            { "800–1200",0 },{ "> 1200",   0 }
-        };
-        foreach (var r in filteredRecipes)
-        {
-            var cal = RecipeService.CalculateTotalCalories(r);
-            if      (cal < 200)  buckets["< 200"]++;
-            else if (cal < 500)  buckets["200–500"]++;
-            else if (cal < 800)  buckets["500–800"]++;
-            else if (cal < 1200) buckets["800–1200"]++;
-            else                 buckets["> 1200"]++;
-        }
-        var rLabels = buckets.Keys.ToArray();
-        var rCounts = buckets.Values.Cast<object>().ToArray();
-        var rBg  = new[]{"rgba(46,204,113,.75)","rgba(52,152,219,.75)","rgba(241,196,15,.75)","rgba(230,126,34,.75)","rgba(231,76,60,.75)"};
-        var rBd  = new[]{"rgba(46,204,113,1)","rgba(52,152,219,1)","rgba(241,196,15,1)","rgba(230,126,34,1)","rgba(231,76,60,1)"};
-        await JS.InvokeVoidAsync("ChartInterop.createOrUpdate",
-            "anRangeChart", "bar", rLabels,
-            new[]{ new{ label="Recipes", data=rCounts, backgroundColor=rBg, borderColor=rBd, borderWidth=2, borderRadius=6 } },
-            new{ responsive=true, maintainAspectRatio=true,
-                 plugins=new{legend=new{display=false}},
-                 scales=new{y=new{beginAtZero=true,ticks=new{stepSize=1}}} });
+        _searchText      = "";
+        SelectedCategory = "";
+        SelectedCuisine  = "";
+        await ExecuteSearch();
     }
 }

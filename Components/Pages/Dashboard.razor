@@ -1,5 +1,6 @@
 @page "/dashboard"
 @attribute [Authorize]
+@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
@@ -8,20 +9,16 @@
 
 @inject RecipeService RecipeService
 @inject AppDbContext Db
-@inject IJSRuntime JS
-
-@rendermode InteractiveServer
 
 <PageTitle>Dashboard</PageTitle>
 
 <div class="container-fluid py-4 px-3 px-md-4">
 
-    <!-- Header -->
     <div class="mb-4">
         <h2 class="fw-bold mb-1">
             <i class="bi bi-speedometer2 me-2 text-success"></i>Dashboard
         </h2>
-        <p class="text-muted">Live analytics for your recipe collection</p>
+        <p class="text-muted">Analytical overview of your recipe collection</p>
     </div>
 
     @if (isLoading)
@@ -34,290 +31,231 @@
     }
     else
     {
-        <!-- KPI Tiles -->
-        <div class="row g-3 mb-4">
+        <!-- ===== KPI TILES —  using <KpiCard /> dumb component ===== -->
+        <div class="row mb-4 g-3">
             <div class="col-6 col-md-3">
-                <div class="kpi-card border-start border-4 border-success">
-                    <div class="kpi-icon text-success"><i class="bi bi-book-fill"></i></div>
-                    <div class="kpi-value">@TotalRecipes</div>
-                    <div class="kpi-label">Total Recipes</div>
-                </div>
+                <KpiCard Title="Total Recipes"
+                         Value="@TotalRecipes.ToString()"
+                         BackgroundColorClass="bg-success"
+                         IconClass="bi-book-fill" />
             </div>
             <div class="col-6 col-md-3">
-                <div class="kpi-card border-start border-4 border-primary">
-                    <div class="kpi-icon text-primary"><i class="bi bi-basket-fill"></i></div>
-                    <div class="kpi-value">@TotalIngredients</div>
-                    <div class="kpi-label">Ingredients</div>
-                </div>
+                <KpiCard Title="Total Ingredients"
+                         Value="@TotalIngredients.ToString()"
+                         BackgroundColorClass="bg-primary"
+                         IconClass="bi-basket-fill" />
             </div>
             <div class="col-6 col-md-3">
-                <div class="kpi-card border-start border-4 border-warning">
-                    <div class="kpi-icon text-warning"><i class="bi bi-fire"></i></div>
-                    <div class="kpi-value">@AvgCalDisplay</div>
-                    <div class="kpi-label">Avg kcal / Serving</div>
-                </div>
+                <KpiCard Title="Avg kcal / Serving"
+                         Value="@($"{AvgCalPerServing:F0} kcal")"
+                         BackgroundColorClass="bg-warning"
+                         IconClass="bi-fire" />
             </div>
             <div class="col-6 col-md-3">
-                <div class="kpi-card border-start border-4 border-danger">
-                    <div class="kpi-icon text-danger"><i class="bi bi-trophy-fill"></i></div>
-                    <div class="kpi-value">@HighestCalDisplay</div>
-                    <div class="kpi-label">Highest Recipe kcal</div>
-                </div>
+                <KpiCard Title="Cuisines Covered"
+                         Value="@CuisineStats.Count.ToString()"
+                         BackgroundColorClass="bg-danger"
+                         IconClass="bi-globe2" />
             </div>
         </div>
 
-        <!-- Charts Row 1 -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-5">
-                <div class="chart-card">
-                    <div class="chart-card-header">
-                        <i class="bi bi-pie-chart-fill text-success me-2"></i>Recipes by Category
-                    </div>
-                    <div class="chart-wrap">
-                        <canvas id="categoryChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-7">
-                <div class="chart-card">
-                    <div class="chart-card-header">
-                        <i class="bi bi-bar-chart-fill text-primary me-2"></i>Recipes by Cuisine
-                    </div>
-                    <div class="chart-wrap">
-                        <canvas id="cuisineChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- ===== CHARTS ROW 1 — TP9: Radzen charts ===== -->
+        <div class="row mb-4 g-4">
 
-        <!-- Charts Row 2 -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-7">
-                <div class="chart-card">
-                    <div class="chart-card-header">
-                        <i class="bi bi-graph-up text-warning me-2"></i>Avg Calories by Cuisine
-                    </div>
-                    <div class="chart-wrap">
-                        <canvas id="avgCalCuisineChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-5">
-                <div class="chart-card">
-                    <div class="chart-card-header">
-                        <i class="bi bi-distribute-vertical text-danger me-2"></i>Calorie Range Distribution
-                    </div>
-                    <div class="chart-wrap">
-                        <canvas id="calRangeChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Recipes Table -->
-        @if (TopRecipes.Any())
-        {
-            <div class="chart-card mb-4">
-                <div class="chart-card-header">
-                    <i class="bi bi-star-fill text-warning me-2"></i>Top @TopRecipes.Count Highest-Calorie Recipes
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Recipe</th>
-                                <th class="text-end">Total kcal</th>
-                                <th class="text-end">kcal / Serving</th>
-                                <th>Level</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (int i = 0; i < TopRecipes.Count; i++)
+            <!-- Column chart: Recipes by Category (TP9 GroupBy + SeriesClick cross-filter) -->
+            <div class="col-md-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bar-chart-fill text-success me-2"></i>
+                            Recipes by Category
+                            @if (SelectedCategory != null)
                             {
-                                var r = TopRecipes[i];
-                                var rank = i + 1;
-                                var (levelText, levelColor) = r.TotalCalories < 300 ? ("Low", "success") :
-                                                              r.TotalCalories < 700 ? ("Medium", "warning") :
-                                                                                      ("High", "danger");
-                                <tr>
-                                    <td>
-                                        @if (rank == 1) { <span class="fw-bold text-warning">🥇</span> }
-                                        else if (rank == 2) { <span class="fw-bold" style="color:#aaa">🥈</span> }
-                                        else if (rank == 3) { <span class="fw-bold" style="color:#cd7f32">🥉</span> }
-                                        else { <span class="text-muted">@rank</span> }
-                                    </td>
-                                    <td class="fw-semibold">@r.Name</td>
-                                    <td class="text-end">@r.TotalCalories.ToString("F0") kcal</td>
-                                    <td class="text-end">@r.PerServing.ToString("F0") kcal</td>
-                                    <td><span class="badge bg-@levelColor">@levelText</span></td>
-                                </tr>
+                                <span class="badge bg-success ms-2">@SelectedCategory</span>
+                                <button class="btn btn-sm btn-link text-muted p-0 ms-2"
+                                        @onclick="ClearCategoryFilter">
+                                    <i class="bi bi-x-circle"></i> Clear filter
+                                </button>
                             }
-                        </tbody>
-                    </table>
+                        </h5>
+                        <small class="text-muted">Click a bar to filter the recipe table below (TP9 cross-filtering)</small>
+                    </div>
+                    <div class="card-body">
+                        <!-- TP9: RadzenChart with SeriesClick event -->
+                        <RadzenChart SeriesClick="@OnCategoryBarClick">
+                            <RadzenColumnSeries Data="@CategoryStats"
+                                               CategoryProperty="CategoryName"
+                                               ValueProperty="Count"
+                                               Title="Recipes"
+                                               Fill="#27ae60" />
+                            <RadzenValueAxis>
+                                <RadzenGridLines Visible="true" />
+                            </RadzenValueAxis>
+                            <RadzenLegend Visible="false" />
+                        </RadzenChart>
+                    </div>
                 </div>
             </div>
-        }
 
-        <!-- Category Table -->
-        @if (CategoryCounts.Any())
-        {
-            <div class="chart-card">
-                <div class="chart-card-header">
-                    <i class="bi bi-list-check me-2 text-success"></i>Category Breakdown
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead class="table-light">
-                            <tr><th>Category</th><th>Count</th><th>Share</th></tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var kv in CategoryCounts.OrderByDescending(x => x.Value))
-                            {
-                                var pct = TotalRecipes > 0 ? (double)kv.Value / TotalRecipes * 100 : 0;
-                                <tr>
-                                    <td>@kv.Key</td>
-                                    <td>@kv.Value</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="progress flex-grow-1" style="height:8px">
-                                                <div class="progress-bar bg-success" style="width:@pct.ToString("F0")%"></div>
-                                            </div>
-                                            <small class="text-muted">@pct.ToString("F0")%</small>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+            <!-- Radial Gauge: Max calories (TP9) -->
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-speedometer2 text-danger me-2"></i>Max Recipe Calories
+                        </h5>
+                    </div>
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <!-- TP9: RadzenRadialGauge -->
+                        <RadzenRadialGauge Style="width:100%; height:240px;">
+                            <RadzenRadialGaugeScale Min="0" Max="@GaugeMax" Step="@GaugeStep">
+                                <RadzenRadialGaugeScalePointer Value="@MaxCalories"
+                                                               Length="0.6"
+                                                               ShowValue="true" />
+                                <RadzenRadialGaugeScaleRange From="0"         To="@(GaugeMax*0.35)" Fill="green" />
+                                <RadzenRadialGaugeScaleRange From="@(GaugeMax*0.35)" To="@(GaugeMax*0.7)"  Fill="orange" />
+                                <RadzenRadialGaugeScaleRange From="@(GaugeMax*0.7)"  To="@GaugeMax"        Fill="red" />
+                            </RadzenRadialGaugeScale>
+                        </RadzenRadialGauge>
+                        <p class="text-muted small mt-2">kcal — highest recipe total</p>
+                    </div>
                 </div>
             </div>
-        }
+        </div>
+
+        <!-- ===== CHARTS ROW 2 ===== -->
+        <div class="row mb-4 g-4">
+
+            <!-- Donut chart: Recipes by Cuisine (TP9 GroupBy + DonutSeries) -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-pie-chart-fill text-primary me-2"></i>Recipes by Cuisine
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- TP9: RadzenDonutSeries -->
+                        <RadzenChart>
+                            <RadzenDonutSeries Data="@CuisineStats"
+                                              CategoryProperty="Cuisine"
+                                              ValueProperty="RecipeCount"
+                                              Title="Cuisine">
+                                <TitleTemplate>
+                                    <div class="rz-donut-content">
+                                        <div style="font-size:.75rem;color:#666">Total</div>
+                                        <div style="font-size:1.5rem;font-weight:700">@TotalRecipes</div>
+                                    </div>
+                                </TitleTemplate>
+                            </RadzenDonutSeries>
+                        </RadzenChart>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column chart: Avg calories by Cuisine (TP9 GroupBy average) -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up text-warning me-2"></i>Avg Calories by Cuisine
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <RadzenChart>
+                            <RadzenColumnSeries Data="@CuisineStats"
+                                               CategoryProperty="Cuisine"
+                                               ValueProperty="AverageCalories"
+                                               Title="Avg kcal"
+                                               Fill="#f39c12" />
+                            <RadzenValueAxis Formatter="@((v) => $"{Math.Round((double)v, 0)} kcal")" />
+                            <RadzenLegend Visible="false" />
+                        </RadzenChart>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== RECIPE TABLE —  <RecipeTable /> component, cross-filtered by chart click ===== -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-table me-2 text-success"></i>
+                    @(SelectedCategory != null ? $"Recipes — {SelectedCategory}" : "All Recipes")
+                    <span class="badge bg-secondary ms-2">@FilteredRecipes.Count</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- TP8: RecipeTable component receives data via [Parameter], no actions in dashboard -->
+                <RecipeTable Recipes="FilteredRecipes" ShowActions="false" />
+            </div>
+        </div>
     }
 </div>
 
-<style>
-    .kpi-card { background:#fff; border-radius:12px; padding:1.1rem 1.2rem; box-shadow:0 2px 8px rgba(0,0,0,.06); display:flex; flex-direction:column; gap:4px; }
-    .kpi-icon { font-size:1.4rem; }
-    .kpi-value { font-size:1.8rem; font-weight:700; line-height:1.1; }
-    .kpi-label { font-size:.8rem; color:#6c757d; }
-    .chart-card { background:#fff; border-radius:12px; padding:1.2rem 1.4rem; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-    .chart-card-header { font-weight:600; font-size:.95rem; margin-bottom:.9rem; color:#2c3e50; }
-    .chart-wrap { position:relative; max-height:280px; }
-</style>
-
 @code {
     private bool isLoading = true;
-    private bool chartsDrawn = false;
 
-    private int TotalRecipes;
-    private int TotalIngredients;
-    private double AvgCaloriesPerServing;
-    private double HighestCalories;
+    private int    TotalRecipes;
+    private int    TotalIngredients;
+    private double AvgCalPerServing;
+    private double MaxCalories;
+    private double GaugeMax  => Math.Max(1000, Math.Ceiling(MaxCalories / 500) * 500);
+    private double GaugeStep => GaugeMax / 5;
 
-    private string AvgCalDisplay     => AvgCaloriesPerServing <= 0 ? "—" : $"{Math.Round(AvgCaloriesPerServing, 0)} kcal";
-    private string HighestCalDisplay => HighestCalories <= 0        ? "—" : $"{Math.Round(HighestCalories, 0)} kcal";
+    // TP9 — Data for Radzen charts (LINQ GroupBy results)
+    private List<CategoryStat> CategoryStats = new();
+    private List<CuisineStats> CuisineStats  = new();
 
-    private Dictionary<string, int> CategoryCounts  = new();
-    private List<CuisineStats>      CuisineData     = new();
-    private Dictionary<string, int> CalRangeBuckets = new();
-    private List<(string Name, double TotalCalories, double PerServing)> TopRecipes = new();
+    // TP9 — Cross-filtering state
+    private string?       SelectedCategory = null;
+    private List<Recipe>  AllRecipes       = new();
+    private List<Recipe>  FilteredRecipes  = new();
 
     protected override async Task OnInitializedAsync()
     {
         TotalIngredients = await Db.Ingredients.CountAsync();
         TotalRecipes     = await Db.Recipes.CountAsync();
 
-        CategoryCounts  = await RecipeService.GetRecipeCountByCategoryAsync();
-        CuisineData     = await RecipeService.GetStatsByCuisineAsync();
-        CalRangeBuckets = await RecipeService.GetCalorieRangeDistributionAsync();
-        TopRecipes      = await RecipeService.GetTopCalorieRecipesAsync(5);
+        // TP9 — LINQ GroupBy queries via the service
+        CategoryStats = await RecipeService.GetCategoryStatsAsync();
+        CuisineStats  = await RecipeService.GetStatsByCuisineAsync();
 
-        if (TopRecipes.Any())
-            HighestCalories = TopRecipes.Max(r => r.TotalCalories);
+        AllRecipes = await RecipeService.GetAllRecipesAsync();
 
-        var allRecipes = await RecipeService.GetAllRecipesAsync();
-        var perServingList = allRecipes
-            .Where(r => r.Servings > 0)
-            .Select(r => RecipeService.CalculateCaloriesPerServing(r))
-            .ToList();
+        if (AllRecipes.Any())
+        {
+            MaxCalories = AllRecipes.Max(r => RecipeService.CalculateTotalCalories(r));
+            var servingCals = AllRecipes
+                .Where(r => r.Servings > 0)
+                .Select(r => RecipeService.CalculateCaloriesPerServing(r));
+            AvgCalPerServing = servingCals.Any() ? servingCals.Average() : 0;
+        }
 
-        AvgCaloriesPerServing = perServingList.Any() ? perServingList.Average() : 0;
-
+        FilteredRecipes = AllRecipes;
         isLoading = false;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    //  Cross-filtering: chart SeriesClick filters the recipe table
+    private void OnCategoryBarClick(SeriesClickEventArgs args)
     {
-        if (!isLoading && !chartsDrawn)
-        {
-            chartsDrawn = true;
-            await DrawChartsAsync();
-        }
+        var clicked = args.Category?.ToString();
+
+        // Toggle: click same category again → clear filter
+        if (SelectedCategory == clicked)
+            SelectedCategory = null;
+        else
+            SelectedCategory = clicked;
+
+        //  Computed property: filter in memory (list already loaded)
+        FilteredRecipes = SelectedCategory == null
+            ? AllRecipes
+            : AllRecipes.Where(r => r.Category == SelectedCategory).ToList();
     }
 
-    private async Task DrawChartsAsync()
+    private void ClearCategoryFilter()
     {
-        var palette = new[]
-        {
-            "rgba(39,174,96,.8)", "rgba(52,152,219,.8)", "rgba(241,196,15,.8)",
-            "rgba(231,76,60,.8)", "rgba(155,89,182,.8)", "rgba(230,126,34,.8)",
-            "rgba(26,188,156,.8)","rgba(149,165,166,.8)"
-        };
-        var borders = palette.Select(c => c.Replace(",.8)", ",1)")).ToArray();
-
-        if (CategoryCounts.Any())
-        {
-            var labels = CategoryCounts.Keys.ToArray();
-            var vals   = CategoryCounts.Values.Cast<object>().ToArray();
-            await JS.InvokeVoidAsync("ChartInterop.createOrUpdate",
-                "categoryChart", "doughnut", labels,
-                new[]{ new { data=vals, backgroundColor=palette.Take(labels.Length).ToArray(),
-                             borderColor=borders.Take(labels.Length).ToArray(), borderWidth=2, hoverOffset=8 } },
-                new { responsive=true, maintainAspectRatio=true,
-                      plugins=new{ legend=new{ position="bottom" } } });
-        }
-
-        if (CuisineData.Any())
-        {
-            var labels = CuisineData.Select(x => x.Cuisine).ToArray();
-            var counts = CuisineData.Select(x => (object)x.RecipeCount).ToArray();
-            await JS.InvokeVoidAsync("ChartInterop.createOrUpdate",
-                "cuisineChart", "bar", labels,
-                new[]{ new { label="Recipes", data=counts,
-                             backgroundColor=palette.Take(labels.Length).ToArray(),
-                             borderColor=borders.Take(labels.Length).ToArray(),
-                             borderWidth=2, borderRadius=6 } },
-                new { responsive=true, maintainAspectRatio=true,
-                      plugins=new{legend=new{display=false}},
-                      scales=new{y=new{beginAtZero=true,ticks=new{stepSize=1}}} });
-
-            var avgCals = CuisineData.Select(x => (object)x.AverageCalories).ToArray();
-            await JS.InvokeVoidAsync("ChartInterop.createOrUpdate",
-                "avgCalCuisineChart", "bar", labels,
-                new[]{ new { label="Avg kcal", data=avgCals,
-                             backgroundColor="rgba(241,196,15,.75)", borderColor="rgba(241,196,15,1)",
-                             borderWidth=2, borderRadius=6 } },
-                new { indexAxis="y", responsive=true, maintainAspectRatio=true,
-                      plugins=new{legend=new{display=false}},
-                      scales=new{x=new{beginAtZero=true}} });
-        }
-
-        if (CalRangeBuckets.Any())
-        {
-            var labels = CalRangeBuckets.Keys.ToArray();
-            var counts = CalRangeBuckets.Values.Cast<object>().ToArray();
-            var bgColors = new[]{ "rgba(46,204,113,.75)","rgba(52,152,219,.75)",
-                                  "rgba(241,196,15,.75)","rgba(230,126,34,.75)","rgba(231,76,60,.75)" };
-            var bdColors = new[]{ "rgba(46,204,113,1)","rgba(52,152,219,1)",
-                                  "rgba(241,196,15,1)","rgba(230,126,34,1)","rgba(231,76,60,1)" };
-            await JS.InvokeVoidAsync("ChartInterop.createOrUpdate",
-                "calRangeChart", "bar", labels,
-                new[]{ new { label="Recipes", data=counts, backgroundColor=bgColors,
-                             borderColor=bdColors, borderWidth=2, borderRadius=6 } },
-                new { responsive=true, maintainAspectRatio=true,
-                      plugins=new{legend=new{display=false}},
-                      scales=new{y=new{beginAtZero=true,ticks=new{stepSize=1}}} });
-        }
+        SelectedCategory = null;
+        FilteredRecipes  = AllRecipes;
     }
 }

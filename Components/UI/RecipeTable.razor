@@ -1,0 +1,83 @@
+@using Recipe_Nutrition_App.Models
+@using Recipe_Nutrition_App.Services
+@inject RecipeService RecipeService
+
+<table class="table table-striped table-hover mt-2">
+    <thead class="table-dark">
+        <tr>
+            <th>Recipe</th>
+            <th>Category</th>
+            <th>Cuisine</th>
+            <th class="text-end">Total kcal</th>
+            <th class="text-end">kcal / Serving</th>
+            <th>Level</th>
+            @if (ShowActions)
+            {
+                <th>Actions</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @if (Recipes == null || !Recipes.Any())
+        {
+            <tr>
+                <td colspan="7" class="text-center text-muted py-3">
+                    <i class="bi bi-inbox me-2"></i>No recipes found.
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var recipe in Recipes)
+            {
+                var total    = RecipeService.CalculateTotalCalories(recipe);
+                var perServ  = RecipeService.CalculateCaloriesPerServing(recipe);
+                var (levelText, levelColor) =
+                    total < 300 ? ("Low", "success") :
+                    total < 700 ? ("Medium", "warning") :
+                                  ("High", "danger");
+                <tr>
+                    <td class="fw-semibold">@recipe.Name</td>
+                    <td>
+                        <span class="badge bg-success bg-opacity-75">@recipe.Category</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">@recipe.Cuisine</span>
+                    </td>
+                    <td class="text-end">@total.ToString("F0") kcal</td>
+                    <td class="text-end">@perServ.ToString("F0") kcal</td>
+                    <td>
+                        <span class="badge bg-@levelColor">@levelText</span>
+                    </td>
+                    @if (ShowActions)
+                    {
+                        <td>
+                            <!-- TP8: EventCallback notifies the Parent -->
+                            <button class="btn btn-sm btn-outline-danger"
+                                    @onclick="() => TriggerDelete(recipe.Id)">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </td>
+                    }
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    // Parent passes the full recipe list
+    [Parameter] public List<Recipe> Recipes { get; set; } = new();
+
+    // EventCallback: child notifies parent, parent acts
+    [Parameter] public EventCallback<int> OnDeleteClicked { get; set; }
+
+    // Show/hide action buttons (false = display mode, e.g. in Dashboard)
+    [Parameter] public bool ShowActions { get; set; } = false;
+
+    //Child triggers the event; parent handles the actual delete
+    private async Task TriggerDelete(int id)
+    {
+        await OnDeleteClicked.InvokeAsync(id);
+    }
+}
