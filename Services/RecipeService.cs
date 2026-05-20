@@ -138,6 +138,20 @@ namespace Recipe_Nutrition_App.Services
             return Math.Round(CalculateTotalCalories(recipe) / recipe.Servings, 1);
         }
 
+        /// <summary>Simple "Healthy Score" badge derived from calories per serving.</summary>
+        public (string Text, string BootstrapColor) GetHealthyScore(Recipe recipe)
+        {
+            var perServing = CalculateCaloriesPerServing(recipe);
+
+            if (perServing < 400)
+                return ("Healthy", "success");      // 🟢
+
+            if (perServing < 700)
+                return ("Moderate", "warning");     // 🟡
+
+            return ("High Calorie", "danger");      // 🔴
+        }
+
         //  ANALYSIS HELPERS (used by Analytics page) 
 
         /// Returns a dictionary: Category → recipe count.

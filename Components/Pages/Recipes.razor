@@ -78,6 +78,7 @@
             {
                 var totalCalories = RecipeService.CalculateTotalCalories(recipe);
                 var caloriesPerServing = RecipeService.CalculateCaloriesPerServing(recipe);
+                var (healthyText, healthyColor) = RecipeService.GetHealthyScore(recipe);
 
                 <div class="col-md-6 col-lg-4">
 
@@ -95,6 +96,7 @@
                             <div class="mb-2">
                                 <span class="badge bg-primary me-1">@recipe.Category</span>
                                 <span class="badge bg-secondary">@recipe.Cuisine</span>
+                                <span class="badge bg-@healthyColor ms-1">@healthyText</span>
                             </div>
 
                             <h5 class="card-title fw-bold">

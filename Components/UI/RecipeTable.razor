@@ -32,10 +32,7 @@
             {
                 var total    = RecipeService.CalculateTotalCalories(recipe);
                 var perServ  = RecipeService.CalculateCaloriesPerServing(recipe);
-                var (levelText, levelColor) =
-                    total < 300 ? ("Low", "success") :
-                    total < 700 ? ("Medium", "warning") :
-                                  ("High", "danger");
+                var (levelText, levelColor) = RecipeService.GetHealthyScore(recipe);
                 <tr>
                     <td class="fw-semibold">@recipe.Name</td>
                     <td>

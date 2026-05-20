@@ -19,3 +19,96 @@
     --user-badge-bg: rgba(255, 255, 255, 0.15);
     --user-badge-hover: rgba(255, 255, 255, 0.25);
 }
+
+/* Auth (Login/Register) */
+.auth-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 3rem 1rem;
+    background:
+        radial-gradient(900px 480px at 18% 12%, rgba(244, 162, 97, 0.18) 0%, transparent 60%),
+        radial-gradient(720px 520px at 82% 10%, rgba(46, 204, 113, 0.16) 0%, transparent 58%),
+        linear-gradient(135deg, rgba(39, 174, 96, 0.14), rgba(46, 204, 113, 0.06) 45%, rgba(245, 245, 245, 1) 100%);
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 520px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(39, 174, 96, 0.16);
+    overflow: hidden;
+    background: #fff;
+}
+
+.auth-card-header {
+    background: linear-gradient(110deg, var(--nav-bg-start), var(--nav-bg-end));
+    color: #fff;
+    padding: 1.25rem 1.25rem 1.1rem;
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.auth-brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.auth-brand-title {
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.15;
+}
+
+.auth-brand-subtitle {
+    margin: 0.15rem 0 0;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.auth-card-body {
+    padding: 1.25rem;
+}
+
+.auth-help {
+    color: #6b7280;
+    margin: 0.75rem 0 0;
+    text-align: center;
+}
+
+.auth-help a {
+    color: var(--nav-bg-end);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-help a:hover {
+    text-decoration: underline;
+}
+
+.auth-footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #334155;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer-link:hover {
+    text-decoration: underline;
+}

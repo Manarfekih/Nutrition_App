@@ -1,4 +1,3 @@
-/* Scoped to Home.razor — dark hero + light sections, inspired by culinary landing layouts */
 
 .home-root {
     /* Full-bleed inside layout container-fluid */
@@ -45,7 +44,6 @@
     font-size: 0.8rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    opacity: 0.85;
     margin-bottom: 0.75rem;
 }
 
@@ -53,17 +51,20 @@
     font-family: var(--home-serif);
     font-size: clamp(2rem, 5vw, 3.25rem);
     font-weight: 700;
-    line-height: 1.12;
     max-width: 20ch;
     margin-bottom: 1rem;
+}
+
+/* Remove focus rectangle when FocusOnNavigate targets the h1 */
+.home-hero-title:focus,
+.home-hero-title:focus-visible {
+    outline: none;
 }
 
 .home-hero-lead {
     font-family: var(--home-sans);
     font-size: clamp(1rem, 2vw, 1.125rem);
-    line-height: 1.65;
     max-width: 36rem;
-    opacity: 0.92;
     margin-bottom: 1.75rem;
 }
 

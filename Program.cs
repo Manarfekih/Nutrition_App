@@ -64,7 +64,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found");
 
-app.UseHttpsRedirection();
+// When running from terminal without an https profile configured, this can warn:
+// "Failed to determine the https port for redirect."
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Auth pipeline 
 app.UseAuthentication();
