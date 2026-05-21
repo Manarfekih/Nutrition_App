@@ -16,7 +16,6 @@
 
     <AuthorizeView Roles="Admin">
         <Authorized Context="_">
-            <!-- Add/Edit Form -->
             <div class="card mb-4">
                 <div class="card-body">
                     <h5 class="card-title mb-3">@submitButtonText</h5>
@@ -49,7 +48,6 @@
         </Authorized>
     </AuthorizeView>
 
-    <!-- Ingredients Table -->
     @if (ingredients.Any())
     {
         <div class="card">

@@ -31,7 +31,6 @@
     }
     else
     {
-        <!-- ===== KPI TILES —  using <KpiCard /> dumb component ===== -->
         <div class="row mb-4 g-3">
             <div class="col-6 col-md-3">
                 <KpiCard Title="Total Recipes"
@@ -59,10 +58,8 @@
             </div>
         </div>
 
-        <!-- ===== CHARTS ROW 1 — TP9: Radzen charts ===== -->
         <div class="row mb-4 g-4">
 
-            <!-- Column chart: Recipes by Category (TP9 GroupBy + SeriesClick cross-filter) -->
             <div class="col-md-8">
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-white">
@@ -78,10 +75,9 @@
                                 </button>
                             }
                         </h5>
-                        <small class="text-muted">Click a bar to filter the recipe table below (TP9 cross-filtering)</small>
+                        <small class="text-muted">Click a bar to filter the recipe table </small>
                     </div>
                     <div class="card-body">
-                        <!-- TP9: RadzenChart with SeriesClick event -->
                         <RadzenChart SeriesClick="@OnCategoryBarClick">
                             <RadzenColumnSeries Data="@CategoryStats"
                                                CategoryProperty="CategoryName"
@@ -97,7 +93,6 @@
                 </div>
             </div>
 
-            <!-- Radial Gauge: Max calories (TP9) -->
             <div class="col-md-4">
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-white">
@@ -106,7 +101,6 @@
                         </h5>
                     </div>
                     <div class="card-body text-center d-flex flex-column justify-content-center">
-                        <!-- TP9: RadzenRadialGauge -->
                         <RadzenRadialGauge Style="width:100%; height:240px;">
                             <RadzenRadialGaugeScale Min="0" Max="@GaugeMax" Step="@GaugeStep">
                                 <RadzenRadialGaugeScalePointer Value="@MaxCalories"
@@ -126,7 +120,6 @@
         <!-- ===== CHARTS ROW 2 ===== -->
         <div class="row mb-4 g-4">
 
-            <!-- Donut chart: Recipes by Cuisine (TP9 GroupBy + DonutSeries) -->
             <div class="col-md-6">
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-white">
@@ -153,7 +146,6 @@
                 </div>
             </div>
 
-            <!-- Column chart: Avg calories by Cuisine (TP9 GroupBy average) -->
             <div class="col-md-6">
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-white">
@@ -176,7 +168,6 @@
             </div>
         </div>
 
-        <!-- ===== RECIPE TABLE —  <RecipeTable /> component, cross-filtered by chart click ===== -->
         <div class="card shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
@@ -186,7 +177,6 @@
                 </h5>
             </div>
             <div class="card-body p-0">
-                <!-- TP8: RecipeTable component receives data via [Parameter], no actions in dashboard -->
                 <RecipeTable Recipes="FilteredRecipes" ShowActions="false" />
             </div>
         </div>
@@ -203,11 +193,9 @@
     private double GaugeMax  => Math.Max(1000, Math.Ceiling(MaxCalories / 500) * 500);
     private double GaugeStep => GaugeMax / 5;
 
-    // TP9 — Data for Radzen charts (LINQ GroupBy results)
     private List<CategoryStat> CategoryStats = new();
     private List<CuisineStats> CuisineStats  = new();
 
-    // TP9 — Cross-filtering state
     private string?       SelectedCategory = null;
     private List<Recipe>  AllRecipes       = new();
     private List<Recipe>  FilteredRecipes  = new();
@@ -217,7 +205,6 @@
         TotalIngredients = await Db.Ingredients.CountAsync();
         TotalRecipes     = await Db.Recipes.CountAsync();
 
-        // TP9 — LINQ GroupBy queries via the service
         CategoryStats = await RecipeService.GetCategoryStatsAsync();
         CuisineStats  = await RecipeService.GetStatsByCuisineAsync();
 
@@ -236,18 +223,15 @@
         isLoading = false;
     }
 
-    //  Cross-filtering: chart SeriesClick filters the recipe table
     private void OnCategoryBarClick(SeriesClickEventArgs args)
     {
         var clicked = args.Category?.ToString();
 
-        // Toggle: click same category again → clear filter
         if (SelectedCategory == clicked)
             SelectedCategory = null;
         else
             SelectedCategory = clicked;
 
-        //  Computed property: filter in memory (list already loaded)
         FilteredRecipes = SelectedCategory == null
             ? AllRecipes
             : AllRecipes.Where(r => r.Category == SelectedCategory).ToList();

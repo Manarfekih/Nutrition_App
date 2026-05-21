@@ -33,7 +33,7 @@
                     </NavLink>
                 </li>
                 <AuthorizeView>
-                    <Authorized>
+                    <Authorized Context="authState">
                         <li class="nav-item">
                             <NavLink class="nav-link" href="/ingredients">
                                 <i class="bi bi-basket nav-icon"></i>
@@ -46,18 +46,22 @@
                                 <span>Recipes</span>
                             </NavLink>
                         </li>
-                        <li class="nav-item">
-                            <NavLink class="nav-link" href="/dashboard">
-                                <i class="bi bi-speedometer2 nav-icon"></i>
-                                <span>Dashboard</span>
-                            </NavLink>
-                        </li>
-                        <li class="nav-item">
-                            <NavLink class="nav-link" href="/analytics">
-                                <i class="bi bi-graph-up-arrow nav-icon"></i>
-                                <span>Analytics</span>
-                            </NavLink>
-                        </li>
+                        <AuthorizeView Roles="Admin">
+                            <Authorized Context="adminAuthState">
+                                <li class="nav-item">
+                                    <NavLink class="nav-link" href="/dashboard">
+                                        <i class="bi bi-speedometer2 nav-icon"></i>
+                                        <span>Dashboard</span>
+                                    </NavLink>
+                                </li>
+                                <li class="nav-item">
+                                    <NavLink class="nav-link" href="/analytics">
+                                        <i class="bi bi-graph-up-arrow nav-icon"></i>
+                                        <span>Analytics</span>
+                                    </NavLink>
+                                </li>
+                            </Authorized>
+                        </AuthorizeView>
                     </Authorized>
                 </AuthorizeView>
             </ul>
@@ -65,8 +69,8 @@
             <!-- Right Section -->
             <div class="d-flex align-items-center gap-2 my-3 my-lg-0 ms-lg-auto">
                 <AuthorizeView>
-                    <Authorized>
-                        <span class="text-muted small d-none d-md-inline">@context.User.Identity?.Name</span>
+                    <Authorized Context="authState">
+                        <span class="text-muted small d-none d-md-inline">@authState.User.Identity?.Name</span>
                         <a class="btn btn-outline-secondary btn-sm" href="/Account/Logout">Sign out</a>
                     </Authorized>
                     <NotAuthorized>

@@ -3,7 +3,6 @@
 @rendermode InteractiveServer
 
 <div class="home-root px-0">
-    <!-- Hero: dark band + kitchen imagery (place hero-kitchen.png in wwwroot/images/home/) -->
     <section class="home-hero" aria-labelledby="home-hero-title">
         <div class="home-hero-inner">
             <p class="home-hero-kicker">Recipe Nutrition</p>
@@ -65,7 +64,6 @@
         </div>
     </section>
 
-    <!-- Feature grid: light section -->
     <section class="home-light-section" aria-labelledby="home-philosophy-title">
         <div class="home-section-head">
             <h2 id="home-philosophy-title" class="home-section-title">Our culinary philosophy</h2>
@@ -114,7 +112,6 @@
         </div>
     </section>
 
-    <!-- Kinds of recipes -->
     <section class="container px-3 px-md-4 pb-2" aria-labelledby="home-kinds-title">
         <div class="home-recipes-strip">
             <h3 id="home-kinds-title">Kinds of recipes you will explore</h3>
@@ -140,11 +137,14 @@
         </div>
     </section>
 
-    <!-- Bottom  -->
     <section class="home-cta-bar">
         <AuthorizeView>
-            <Authorized>
-                <a href="/dashboard" class="btn btn-outline-primary btn-lg me-2 mb-2">Open dashboard</a>
+            <Authorized Context="authState">
+                <AuthorizeView Roles="Admin">
+                    <Authorized Context="adminAuthState">
+                        <a href="/dashboard" class="btn btn-outline-primary btn-lg me-2 mb-2">Open dashboard</a>
+                    </Authorized>
+                </AuthorizeView>
                 <a href="/recipes" class="btn btn-primary btn-lg mb-2">Go to recipes</a>
             </Authorized>
             <NotAuthorized>

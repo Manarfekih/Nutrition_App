@@ -9,13 +9,13 @@ namespace Recipe_Nutrition_App.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = "";
 
         [Required, Range(0, double.MaxValue)]
         public double Calories { get; set; }
 
         [Required, StringLength(20)]
-        public string Unit { get; set; }
+        public string Unit { get; set; } = "";
 
         public string? ImagePath { get; set; }
 

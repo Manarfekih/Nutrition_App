@@ -22,7 +22,6 @@
         </button>
     </div>
 
-    <!-- ===== FILTER BAR : real-time search + IQueryable ===== -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <div class="row g-3 align-items-end">
@@ -42,7 +41,6 @@
                     </div>
                 </div>
 
-                <!-- Category dropdown -->
                 <div class="col-6 col-md-4">
                     <label class="form-label fw-semibold small">
                         <i class="bi bi-tag me-1"></i>Category
@@ -57,7 +55,6 @@
                     </select>
                 </div>
 
-                <!-- Cuisine dropdown -->
                 <div class="col-6 col-md-4">
                     <label class="form-label fw-semibold small">
                         <i class="bi bi-globe2 me-1"></i>Cuisine
@@ -119,7 +116,6 @@
             }
         </p>
 
-        <!-- ===== KPI tiles (TP8: KpiCard) for filtered result ===== -->
         <div class="row g-3 mb-4">
             <div class="col-6 col-md-3">
                 <KpiCard Title="Recipes Found"
@@ -147,7 +143,6 @@
             </div>
         </div>
 
-        <!-- ===== CHARTS — TP9: Radzen, data from filtered result ===== -->
         <div class="row g-4 mb-4">
 
             <!-- Donut: filtered category distribution -->
@@ -204,7 +199,6 @@
             </div>
         </div>
 
-        <!-- ===== RECIPE TABLE — TP8: RecipeTable component ===== -->
         <div class="card shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
@@ -223,7 +217,6 @@
                 </div>
             </div>
             <div class="card-body p-0">
-                <!-- TP8: RecipeTable receives filtered+sorted list via [Parameter] -->
                 <RecipeTable Recipes="SortedRecipes" ShowActions="false" />
             </div>
         </div>
@@ -233,7 +226,6 @@
 @code {
     private bool isLoading = true;
 
-    // Filter state (TP10)
     private List<Recipe> FilteredRecipes = new();
     private List<string> AllCategories   = new();
     private List<string> AllCuisines     = new();
@@ -243,23 +235,20 @@
     private string SelectedCuisine  = "";
     private string SortMode         = "name";
 
-    //  SearchText property with setter that auto-triggers IQueryable search
     private string SearchText
     {
         get => _searchText;
         set
         {
             _searchText = value;
-            _ = ExecuteSearch();   // fires SQL search on every keystroke
+            _ = ExecuteSearch();   
         }
     }
 
-    // Computed stats for KPI tiles (from filtered list)
     private double FilteredAvgTotal   => FilteredRecipes.Any() ? FilteredRecipes.Average(r => RecipeService.CalculateTotalCalories(r)) : 0;
     private double FilteredAvgServing => FilteredRecipes.Any() ? FilteredRecipes.Average(r => RecipeService.CalculateCaloriesPerServing(r)) : 0;
     private double FilteredMax        => FilteredRecipes.Any() ? FilteredRecipes.Max(r => RecipeService.CalculateTotalCalories(r)) : 0;
 
-    // Computed chart data from filtered list (TP9 GroupBy in memory on already-filtered data)
     private List<CategoryStat> FilteredCategoryStats =>
         FilteredRecipes
             .GroupBy(r => r.Category ?? "Unknown")
@@ -279,7 +268,6 @@
             .OrderByDescending(x => x.RecipeCount)
             .ToList();
 
-    // Sorted version of filtered list for the table
     private List<Recipe> SortedRecipes => SortMode switch
     {
         "cal_desc"     => FilteredRecipes.OrderByDescending(r => RecipeService.CalculateTotalCalories(r)).ToList(),
@@ -290,7 +278,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Load dropdown options from the full table
+        
         var all = await RecipeService.GetAllRecipesAsync();
         AllCategories = all.Select(r => r.Category).Where(c => !string.IsNullOrEmpty(c))
                            .Distinct().OrderBy(x => x).ToList()!;
@@ -301,7 +289,6 @@
         isLoading = false;
     }
 
-    //  Central method — sends filters to EF Core IQueryable, not in-memory
     private async Task ExecuteSearch()
     {
         FilteredRecipes = await RecipeService.SearchRecipesAsync(
@@ -313,7 +300,7 @@
 
     private void ApplySort()
     {
-        // SortedRecipes is a computed property — no extra action needed
+       
         StateHasChanged();
     }
 

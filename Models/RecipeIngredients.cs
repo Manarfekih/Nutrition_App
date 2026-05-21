@@ -6,11 +6,11 @@ namespace Recipe_Nutrition_App.Models
     {
         // fk Recipe
         public int RecipeId { get; set; }
-        public Recipe Recipe { get; set; }
+        public Recipe Recipe { get; set; } = null!;
 
         // fk Ingredient
         public int IngredientId { get; set; }
-        public Ingredient Ingredient { get; set; } 
+        public Ingredient Ingredient { get; set; } = null!;
 
         [Required, Range(0, double.MaxValue)]
         public double Quantity { get; set; } 

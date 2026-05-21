@@ -15,7 +15,6 @@ namespace Recipe_Nutrition_App.Services
 
         //  READ 
 
-        /// <summary>Returns all recipes with their ingredients eagerly loaded.</summary>
         public async Task<List<Recipe>> GetAllRecipesAsync()
         {
             return await _context.Recipes
@@ -25,7 +24,6 @@ namespace Recipe_Nutrition_App.Services
                 .ToListAsync();
         }
 
-        /// Returns a single recipe by id, or null if not found.
         public async Task<Recipe?> GetRecipeByIdAsync(int id)
         {
             return await _context.Recipes
@@ -34,9 +32,7 @@ namespace Recipe_Nutrition_App.Services
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
-        //  SEARCH / FILTER 
 
-        /// Filters recipes by name/ingredient keyword, category, and/or cuisine.
         public async Task<List<Recipe>> SearchRecipesAsync(
             string? searchTerm,
             string? category,
@@ -67,7 +63,6 @@ namespace Recipe_Nutrition_App.Services
 
         //  CREATE 
 
-        /// <summary>Adds a new recipe (with its RecipeIngredient rows) to the DB.</summary>
         public async Task AddRecipeAsync(Recipe recipe)
         {
             _context.Recipes.Add(recipe);
@@ -76,7 +71,6 @@ namespace Recipe_Nutrition_App.Services
 
         //  UPDATE 
 
-        /// Updates scalar fields and replaces the ingredient list atomically.
         public async Task UpdateRecipeAsync(Recipe updated)
         {
             var existing = await _context.Recipes
@@ -85,7 +79,6 @@ namespace Recipe_Nutrition_App.Services
 
             if (existing is null) return;
 
-            // Scalar fields
             existing.Name      = updated.Name;
             existing.Servings  = updated.Servings;
             existing.Category  = updated.Category;
@@ -93,11 +86,10 @@ namespace Recipe_Nutrition_App.Services
             existing.ImagePath = updated.ImagePath;
             existing.VideoLink = updated.VideoLink;
 
-            // Replace join-table rows
             _context.RecipeIngredients.RemoveRange(existing.RecipeIngredients);
             foreach (var ri in updated.RecipeIngredients)
             {
-                ri.RecipeId = existing.Id;   // make sure FK is set
+                ri.RecipeId = existing.Id;   
                 existing.RecipeIngredients.Add(ri);
             }
 
@@ -119,9 +111,7 @@ namespace Recipe_Nutrition_App.Services
             await _context.SaveChangesAsync();
         }
 
-        //  CALORIE CALCULATIONS 
-
-        /// <summary>Sum of (Quantity × Ingredient.Calories) for every ingredient.</summary>
+       
         public double CalculateTotalCalories(Recipe recipe)
         {
             if (recipe.RecipeIngredients is null || !recipe.RecipeIngredients.Any())
@@ -131,30 +121,26 @@ namespace Recipe_Nutrition_App.Services
                 .Sum(ri => ri.Quantity * (ri.Ingredient?.Calories ?? 0));
         }
 
-        /// Total calories divided by the number of servings.
         public double CalculateCaloriesPerServing(Recipe recipe)
         {
             if (recipe.Servings <= 0) return 0;
             return Math.Round(CalculateTotalCalories(recipe) / recipe.Servings, 1);
         }
 
-        /// <summary>Simple "Healthy Score" badge derived from calories per serving.</summary>
         public (string Text, string BootstrapColor) GetHealthyScore(Recipe recipe)
         {
             var perServing = CalculateCaloriesPerServing(recipe);
 
             if (perServing < 400)
-                return ("Healthy", "success");      // 🟢
+                return ("Healthy", "success");     
 
             if (perServing < 700)
-                return ("Moderate", "warning");     // 🟡
+                return ("Moderate", "warning");    
 
-            return ("High Calorie", "danger");      // 🔴
+            return ("High Calorie", "danger");     
         }
 
-        //  ANALYSIS HELPERS (used by Analytics page) 
 
-        /// Returns a dictionary: Category → recipe count.
         public async Task<Dictionary<string, int>> GetRecipeCountByCategoryAsync()
         {
             return await _context.Recipes
@@ -180,7 +166,6 @@ namespace Recipe_Nutrition_App.Services
                 .ToList();
         }
 
-        /// Returns top N recipes sorted by total calories descending.
         public async Task<List<(string Name, double TotalCalories, double PerServing)>> GetTopCalorieRecipesAsync(int top = 5)
         {
             var recipes = await GetAllRecipesAsync();
@@ -191,7 +176,6 @@ namespace Recipe_Nutrition_App.Services
                 .ToList();
         }
 
-        /// Returns calorie-range buckets for all recipes.
         public async Task<Dictionary<string, int>> GetCalorieRangeDistributionAsync()
         {
             var recipes = await GetAllRecipesAsync();
@@ -217,7 +201,6 @@ namespace Recipe_Nutrition_App.Services
             return buckets;
         }
 
-        /// Returns a list of CategoryStat objects for Radzen charts (TP9 LINQ GroupBy).
         public async Task<List<CategoryStat>> GetCategoryStatsAsync()
         {
             return await _context.Recipes
@@ -232,7 +215,6 @@ namespace Recipe_Nutrition_App.Services
         }
     }
 
-    //  DTO returned by GetStatsByCuisineAsync 
     public class CuisineStats
     {
         public string  Cuisine         { get; set; } = string.Empty;
@@ -240,7 +222,6 @@ namespace Recipe_Nutrition_App.Services
         public double  AverageCalories { get; set; }
     }
 
-    // DTO for category chart (TP9)
     public class CategoryStat
     {
         public string CategoryName { get; set; } = string.Empty;

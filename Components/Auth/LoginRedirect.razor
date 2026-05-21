@@ -1,0 +1,17 @@
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+        if (string.IsNullOrWhiteSpace(returnUrl))
+        {
+            Nav.NavigateTo("/Account/Login", forceLoad: true);
+            return;
+        }
+
+        Nav.NavigateTo($"/Account/Login?returnUrl={Uri.EscapeDataString("/" + returnUrl)}", forceLoad: true);
+    }
+}
+
