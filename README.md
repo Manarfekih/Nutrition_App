@@ -91,7 +91,8 @@ Classify recipes based on their calorie range (low, medium, or high).
 ## Team
 
 Name  : 
-|Manar El Fakih Romdahne
+
+Manar El Fakih Romdahne
 Chayma Akkachi  
 Nada Azzouz 
 
